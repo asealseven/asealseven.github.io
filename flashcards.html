@@ -1,0 +1,2447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Language Flashcards</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0f0f0f;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ---- HEADER ---- */
+  .app-header {
+    padding: 2rem 2rem 1rem;
+    text-align: center;
+  }
+  .app-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    letter-spacing: 0.12em;
+    color: #fff;
+    line-height: 1;
+  }
+  .app-subtitle {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    color: #666;
+    text-transform: uppercase;
+    margin-top: 0.4rem;
+  }
+
+  /* ---- LANGUAGE SELECTOR ---- */
+  .lang-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.2rem 2rem;
+    flex-wrap: wrap;
+  }
+  .lang-bar label {
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: #555;
+    text-transform: uppercase;
+  }
+  .lang-select {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .lang-select:hover { border-color: #666; }
+
+  /* ---- CATEGORY TABS ---- */
+  .cat-nav {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    scrollbar-width: none;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .cat-nav::-webkit-scrollbar { display: none; }
+
+  .cat-tab {
+    padding: 0.45rem 1.1rem;
+    border-radius: 100px;
+    border: 1px solid transparent;
+    font-size: 0.78rem;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s var(--ease);
+    background: #1a1a1a;
+    color: #888;
+    border-color: #2a2a2a;
+  }
+  .cat-tab:hover { color: #ccc; border-color: #444; }
+  .cat-tab.active {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  /* Category accent colors for tabs */
+  .cat-tab.active[data-cat="basic"]       { background: #1a2535; border-color: #3b7dd8; color: #7ab3f0; }
+  .cat-tab.active[data-cat="numbers"]     { background: #251a35; border-color: #8b3bd8; color: #c07af0; }
+  .cat-tab.active[data-cat="people"]      { background: #351a1a; border-color: #d83b3b; color: #f07a7a; }
+  .cat-tab.active[data-cat="time"]        { background: #1a3525; border-color: #3bd88b; color: #7af0b3; }
+  .cat-tab.active[data-cat="directions"]  { background: #35251a; border-color: #d88b3b; color: #f0c07a; }
+  .cat-tab.active[data-cat="food"]        { background: #1a3535; border-color: #3bd8d8; color: #7af0f0; }
+  .cat-tab.active[data-cat="transport"]   { background: #252535; border-color: #6b6bd8; color: #a0a0f0; }
+  .cat-tab.active[data-cat="emergencies"] { background: #351a25; border-color: #d83b8b; color: #f07ab3; }
+  .cat-tab.active[data-cat="essential"]   { background: #2a2a1a; border-color: #d8c83b; color: #f0e07a; }
+  .cat-tab.active[data-cat="phrases"]     { background: #1a1a2e; border-color: #7b5bd8; color: #c0a0f8; }
+
+  /* ---- CARD GRID ---- */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.2rem;
+    padding: 1.5rem 2rem 4rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* ---- BASE FLASHCARD ---- */
+  .flashcard {
+    border-radius: 16px;
+    padding: 1.6rem;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    user-select: none;
+  }
+  .flashcard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+  .flashcard:active { transform: scale(0.98); }
+
+  .card-native {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .card-pronunciation {
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    opacity: 0.65;
+    margin-top: 0.3rem;
+    font-style: italic;
+  }
+  .card-eng-pronunciation {
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    opacity: 0.4;
+    margin-top: 0.15rem;
+    font-family: 'DM Sans', sans-serif;
+    font-style: normal;
+  }
+  .card-english {
+    font-size: 0.82rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.55;
+    margin-top: auto;
+    padding-top: 1rem;
+  }
+  .card-decoration {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  /* ==== CATEGORY THEMES ==== */
+
+  /* BASIC COMMUNICATION: Deep navy, clean serif, grid lines */
+  .theme-basic {
+    background: linear-gradient(135deg, #0d1b2e 0%, #1a2f4a 100%);
+    border: 1px solid rgba(59,125,216,0.3);
+    font-family: 'Syne', sans-serif;
+  }
+  .theme-basic .card-native { color: #90c4ff; font-family: 'Syne', sans-serif; font-weight: 800; }
+  .theme-basic .card-pronunciation { color: #5a9fd4; }
+  .theme-basic .card-english { color: #4a7a9b; }
+  .theme-basic::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 120px; height: 120px;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 18px,
+      rgba(59,125,216,0.08) 18px, rgba(59,125,216,0.08) 19px
+    ),
+    repeating-linear-gradient(
+      90deg, transparent, transparent 18px,
+      rgba(59,125,216,0.08) 18px, rgba(59,125,216,0.08) 19px
+    );
+    border-radius: 0 16px 0 0;
+  }
+  .theme-basic .cat-label { color: #3b7dd8; }
+
+  /* NUMBERS: Dark purple, monospace, geometric circles */
+  .theme-numbers {
+    background: linear-gradient(135deg, #120a1f 0%, #1e0f33 100%);
+    border: 1px solid rgba(139,59,216,0.35);
+    font-family: 'Space Mono', monospace;
+  }
+  .theme-numbers .card-native { color: #d0a0ff; font-family: 'Space Mono', monospace; font-size: 2rem; }
+  .theme-numbers .card-pronunciation { color: #9966cc; font-family: 'Space Mono', monospace; }
+  .theme-numbers .card-english { color: #6633aa; font-family: 'Space Mono', monospace; font-size: 0.72rem; }
+  .theme-numbers::after {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    border: 1px solid rgba(139,59,216,0.2);
+    box-shadow: 0 0 0 25px rgba(139,59,216,0.05), 0 0 0 50px rgba(139,59,216,0.03);
+  }
+
+  /* PEOPLE & PRONOUNS: Deep crimson, editorial, torn texture feel */
+  .theme-people {
+    background: linear-gradient(135deg, #1e0808 0%, #2d0f0f 100%);
+    border: 1px solid rgba(216,59,59,0.3);
+    font-family: 'Crimson Pro', serif;
+  }
+  .theme-people .card-native { color: #ff9090; font-family: 'Playfair Display', serif; font-size: 1.9rem; font-weight: 900; }
+  .theme-people .card-pronunciation { color: #cc6666; font-style: italic; }
+  .theme-people .card-english { color: #884444; font-family: 'DM Sans', sans-serif; }
+  .theme-people::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 3px;
+    background: linear-gradient(90deg, #d83b3b, transparent);
+  }
+
+  /* TIME: Forest green, clean sans, clock motif */
+  .theme-time {
+    background: linear-gradient(135deg, #061910 0%, #0d2a1a 100%);
+    border: 1px solid rgba(59,216,139,0.3);
+    font-family: 'Syne', sans-serif;
+  }
+  .theme-time .card-native { color: #80ffb8; font-family: 'Syne', sans-serif; font-weight: 800; }
+  .theme-time .card-pronunciation { color: #4daa77; }
+  .theme-time .card-english { color: #2d6644; }
+  .theme-time::after {
+    content: '';
+    position: absolute;
+    top: -20px; right: -20px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    border: 1px solid rgba(59,216,139,0.15);
+  }
+  .theme-time .clock-tick {
+    position: absolute;
+    top: 6px; right: 28px;
+    width: 1px; height: 8px;
+    background: rgba(59,216,139,0.3);
+  }
+  .theme-time .clock-tick2 {
+    position: absolute;
+    top: 28px; right: 6px;
+    width: 8px; height: 1px;
+    background: rgba(59,216,139,0.3);
+  }
+
+  /* DIRECTIONS: Warm amber, bold condensed, compass motif */
+  .theme-directions {
+    background: linear-gradient(135deg, #1f0e00 0%, #2e1600 100%);
+    border: 1px solid rgba(216,139,59,0.3);
+    font-family: 'Bebas Neue', sans-serif;
+  }
+  .theme-directions .card-native { color: #ffcc80; font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 0.05em; }
+  .theme-directions .card-pronunciation { color: #c8882a; font-family: 'DM Sans', sans-serif; font-style: italic; }
+  .theme-directions .card-english { color: #7a4a15; font-family: 'DM Sans', sans-serif; }
+  .theme-directions::before {
+    content: 'N';
+    position: absolute;
+    top: 12px; right: 18px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    color: rgba(216,139,59,0.15);
+    letter-spacing: 0;
+  }
+
+  /* FOOD & DRINK: Teal, organic, warm feel */
+  .theme-food {
+    background: linear-gradient(135deg, #001f1f 0%, #002e2e 100%);
+    border: 1px solid rgba(59,216,216,0.3);
+    font-family: 'Crimson Pro', serif;
+  }
+  .theme-food .card-native { color: #80ffff; font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.8rem; }
+  .theme-food .card-pronunciation { color: #3daaaa; }
+  .theme-food .card-english { color: #226666; font-family: 'DM Sans', sans-serif; }
+  .theme-food::after {
+    content: '';
+    position: absolute;
+    bottom: -15px; right: -15px;
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(59,216,216,0.06) 0%, transparent 70%);
+  }
+
+  /* TRANSPORT: Slate blue, technical, clean lines */
+  .theme-transport {
+    background: linear-gradient(135deg, #0d0d22 0%, #141433 100%);
+    border: 1px solid rgba(107,107,216,0.35);
+    font-family: 'Space Mono', monospace;
+  }
+  .theme-transport .card-native { color: #b0b0ff; font-family: 'Space Mono', monospace; }
+  .theme-transport .card-pronunciation { color: #6868aa; font-family: 'Space Mono', monospace; }
+  .theme-transport .card-english { color: #404080; font-family: 'Space Mono', monospace; font-size: 0.72rem; }
+  .theme-transport::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(107,107,216,0.6), transparent);
+  }
+
+  /* EMERGENCIES: High contrast red-pink, urgent, bold */
+  .theme-emergencies {
+    background: linear-gradient(135deg, #1f0010 0%, #2e0018 100%);
+    border: 1px solid rgba(216,59,139,0.4);
+    font-family: 'Syne', sans-serif;
+  }
+  .theme-emergencies .card-native { color: #ff80c0; font-family: 'Syne', sans-serif; font-weight: 800; }
+  .theme-emergencies .card-pronunciation { color: #cc4488; }
+  .theme-emergencies .card-english { color: #882255; }
+  .theme-emergencies::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 4px; height: 100%;
+    background: linear-gradient(180deg, #d83b8b, transparent);
+    border-radius: 0 16px 16px 0;
+  }
+
+  /* ESSENTIAL PHRASES: Gold/amber, editorial, premium */
+  .theme-essential {
+    background: linear-gradient(135deg, #1a1500 0%, #262000 100%);
+    border: 1px solid rgba(216,200,59,0.3);
+    font-family: 'Playfair Display', serif;
+  }
+  .theme-essential .card-native { color: #ffe880; font-family: 'Playfair Display', serif; font-weight: 700; }
+  .theme-essential .card-pronunciation { color: #aa9930; }
+  .theme-essential .card-english { color: #665500; font-family: 'DM Sans', sans-serif; }
+  .theme-essential::after {
+    content: '"';
+    position: absolute;
+    top: -10px; left: 12px;
+    font-family: 'Playfair Display', serif;
+    font-size: 6rem;
+    color: rgba(216,200,59,0.06);
+    line-height: 1;
+  }
+
+  /* HANDY PHRASES: Deep indigo, conversational, speech bubble feel */
+  .theme-phrases {
+    background: linear-gradient(135deg, #0e0a22 0%, #1a1240 100%);
+    border: 1px solid rgba(123,91,216,0.35);
+    font-family: 'Syne', sans-serif;
+  }
+  .theme-phrases .card-native { color: #c8a8ff; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.35rem; line-height: 1.3; }
+  .theme-phrases .card-pronunciation { color: #7b5bd8; }
+  .theme-phrases .card-english { color: #4a3380; font-family: 'DM Sans', sans-serif; }
+  .theme-phrases::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at 90% 10%, rgba(123,91,216,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* ---- CATEGORY LABEL ---- */
+  .cat-label {
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.6;
+    margin-bottom: 0.8rem;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ---- FLIP OVERLAY (pronunciation pop) ---- */
+  .card-details {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+    padding: 2rem;
+  }
+  .card-details.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .detail-card {
+    max-width: 420px;
+    width: 100%;
+    border-radius: 20px;
+    padding: 2.5rem;
+    text-align: center;
+    transform: scale(0.9);
+    transition: transform 0.3s var(--ease);
+  }
+  .card-details.open .detail-card {
+    transform: scale(1);
+  }
+  .detail-english-small {
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-bottom: 1rem;
+  }
+  .detail-native {
+    font-size: 2.8rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 0.8rem;
+  }
+  .detail-pronunciation {
+    font-size: 1.1rem;
+    opacity: 0.7;
+    font-style: italic;
+    margin-bottom: 1.5rem;
+  }
+  .detail-english {
+    font-size: 1.4rem;
+    opacity: 0.9;
+    font-weight: 600;
+  }
+  .detail-close {
+    margin-top: 2rem;
+    padding: 0.6rem 2rem;
+    border-radius: 100px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .detail-close:hover { background: rgba(255,255,255,0.1); }
+
+  /* ---- PROGRESS STRIP ---- */
+  .progress-bar-wrap {
+    padding: 0 2rem 0.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: #444;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+  .progress-track {
+    height: 2px;
+    background: #222;
+    border-radius: 1px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 1px;
+    background: #fff;
+    transition: width 0.4s var(--ease);
+  }
+
+  /* ---- EMPTY STATE ---- */
+  .empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #333;
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+  }
+
+  /* ---- SCROLL TO TOP ---- */
+  .scroll-top {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #fff;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .scroll-top.visible { opacity: 1; pointer-events: all; }
+  .scroll-top:hover { background: #2a2a2a; transform: translateY(-2px); }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-title">Language Flashcards</div>
+  <div class="app-subtitle">Tap any card for detail view</div>
+</header>
+
+<div class="lang-bar">
+  <label>Target Language</label>
+  <select class="lang-select" id="langSelect">
+    <option value="spanish">Spanish</option>
+    <option value="french">French</option>
+    <option value="german">German</option>
+    <option value="italian">Italian</option>
+    <option value="portuguese">Portuguese</option>
+    <option value="japanese">Japanese</option>
+    <option value="mandarin">Mandarin</option>
+    <option value="arabic">Arabic</option>
+    <option value="greek">Greek</option>
+    <option value="polish">Polish</option>
+    <option value="thai">Thai</option>
+    <option value="vietnamese">Vietnamese</option>
+  </select>
+</div>
+
+<nav class="cat-nav" id="catNav"></nav>
+
+<div class="progress-bar-wrap">
+  <div class="progress-info">
+    <span id="progressLabel">0 cards</span>
+    <span id="catName">All</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+</div>
+
+<div class="card-grid" id="cardGrid"></div>
+
+<div class="card-details" id="detailOverlay">
+  <div class="detail-card" id="detailCard">
+    <div class="detail-english-small" id="detailCat"></div>
+    <div class="detail-native" id="detailNative"></div>
+    <div class="detail-pronunciation" id="detailPronunciation"></div>
+    <div id="detailEngPron" style="font-size:0.8rem;opacity:0.45;margin-bottom:0.8rem;font-family:'DM Sans',sans-serif;"></div>
+    <div class="detail-english" id="detailEnglish"></div>
+    <button class="detail-close" onclick="closeDetail()">Close</button>
+  </div>
+</div>
+
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+// ============================================================
+// LANGUAGE DATA TEMPLATE
+// To add a new language, add an entry to LANGUAGES below.
+// Each phrase entry: { en, native, pronunciation }
+// ============================================================
+
+const LANGUAGES = {
+  spanish: {
+    name: "Spanish",
+    categories: {
+      basic: [
+        { en: "Hello / Hi", native: "Hola", pronunciation: "OH-lah" },
+        { en: "Goodbye", native: "Adiós", pronunciation: "ah-dee-OHS" },
+        { en: "Please", native: "Por favor", pronunciation: "por fah-VOR" },
+        { en: "Thank you", native: "Gracias", pronunciation: "GRAH-see-as" },
+        { en: "Sorry / Excuse me", native: "Lo siento / Perdón", pronunciation: "loh SYEN-toh / per-DON" },
+        { en: "Yes", native: "Sí", pronunciation: "see" },
+        { en: "No", native: "No", pronunciation: "noh" },
+        { en: "I don't understand", native: "No entiendo", pronunciation: "noh en-TYEN-doh" },
+        { en: "Do you speak English?", native: "¿Habla inglés?", pronunciation: "AH-blah een-GLAYS" },
+        { en: "Help", native: "Ayuda", pronunciation: "ah-YOO-dah" },
+      ],
+      numbers: [
+        { en: "1", native: "Uno", pronunciation: "OO-noh" },
+        { en: "2", native: "Dos", pronunciation: "dohs" },
+        { en: "3", native: "Tres", pronunciation: "trehs" },
+        { en: "4", native: "Cuatro", pronunciation: "KWAH-troh" },
+        { en: "5", native: "Cinco", pronunciation: "SEEN-koh" },
+        { en: "6", native: "Seis", pronunciation: "says" },
+        { en: "7", native: "Siete", pronunciation: "SYEH-teh" },
+        { en: "8", native: "Ocho", pronunciation: "OH-choh" },
+        { en: "9", native: "Nueve", pronunciation: "NWEH-veh" },
+        { en: "10", native: "Diez", pronunciation: "dyehs" },
+        { en: "11", native: "Once", pronunciation: "ON-seh" },
+        { en: "12", native: "Doce", pronunciation: "DOH-seh" },
+        { en: "13", native: "Trece", pronunciation: "TREH-seh" },
+        { en: "14", native: "Catorce", pronunciation: "kah-TOR-seh" },
+        { en: "15", native: "Quince", pronunciation: "KEEN-seh" },
+        { en: "16", native: "Dieciséis", pronunciation: "dyeh-see-SAYS" },
+        { en: "17", native: "Diecisiete", pronunciation: "dyeh-see-SYEH-teh" },
+        { en: "18", native: "Dieciocho", pronunciation: "dyeh-see-OH-choh" },
+        { en: "19", native: "Diecinueve", pronunciation: "dyeh-see-NWEH-veh" },
+        { en: "20", native: "Veinte", pronunciation: "VAYN-teh" },
+        { en: "30", native: "Treinta", pronunciation: "TRAYN-tah" },
+        { en: "40", native: "Cuarenta", pronunciation: "kwah-REN-tah" },
+        { en: "50", native: "Cincuenta", pronunciation: "seen-KWEN-tah" },
+        { en: "60", native: "Sesenta", pronunciation: "seh-SEN-tah" },
+        { en: "70", native: "Setenta", pronunciation: "seh-TEN-tah" },
+        { en: "80", native: "Ochenta", pronunciation: "oh-CHEN-tah" },
+        { en: "90", native: "Noventa", pronunciation: "noh-VEN-tah" },
+        { en: "100", native: "Cien", pronunciation: "syen" },
+        { en: "200", native: "Doscientos", pronunciation: "doh-SYEN-tohs" },
+        { en: "300", native: "Trescientos", pronunciation: "tres-SYEN-tohs" },
+        { en: "400", native: "Cuatrocientos", pronunciation: "kwah-troh-SYEN-tohs" },
+        { en: "500", native: "Quinientos", pronunciation: "kee-NYEN-tohs" },
+        { en: "600", native: "Seiscientos", pronunciation: "says-SYEN-tohs" },
+        { en: "700", native: "Setecientos", pronunciation: "seh-teh-SYEN-tohs" },
+        { en: "800", native: "Ochocientos", pronunciation: "oh-choh-SYEN-tohs" },
+        { en: "900", native: "Novecientos", pronunciation: "noh-veh-SYEN-tohs" },
+        { en: "1000", native: "Mil", pronunciation: "meel" },
+      ],
+      people: [
+        { en: "I / Me", native: "Yo / Me", pronunciation: "yoh / meh" },
+        { en: "You", native: "Tú", pronunciation: "too" },
+        { en: "He / She", native: "Él / Ella", pronunciation: "el / EH-yah" },
+        { en: "We", native: "Nosotros", pronunciation: "noh-SOH-trohs" },
+        { en: "Man / Woman", native: "Hombre / Mujer", pronunciation: "OM-breh / moo-HAIR" },
+        { en: "Child", native: "Niño / Niña", pronunciation: "NEE-nyoh / NEE-nyah" },
+      ],
+      time: [
+        { en: "Today", native: "Hoy", pronunciation: "oy" },
+        { en: "Tomorrow", native: "Mañana", pronunciation: "mah-NYAH-nah" },
+        { en: "Yesterday", native: "Ayer", pronunciation: "ah-YAIR" },
+        { en: "Now", native: "Ahora", pronunciation: "ah-OH-rah" },
+        { en: "Morning / Afternoon / Evening", native: "Mañana / Tarde / Noche", pronunciation: "mah-NYAH-nah / TAR-deh / NOH-cheh" },
+        { en: "What time is it?", native: "¿Qué hora es?", pronunciation: "keh OH-rah es" },
+      ],
+      directions: [
+        { en: "Where is…?", native: "¿Dónde está…?", pronunciation: "DON-deh es-TAH" },
+        { en: "Left / Right", native: "Izquierda / Derecha", pronunciation: "ees-KYAIR-dah / deh-REH-chah" },
+        { en: "Straight ahead", native: "Todo recto", pronunciation: "TOH-doh REK-toh" },
+        { en: "Near / Far", native: "Cerca / Lejos", pronunciation: "SAIR-kah / LEH-hos" },
+        { en: "Here / There", native: "Aquí / Allí", pronunciation: "ah-KEE / ah-YEE" },
+        { en: "Airport", native: "Aeropuerto", pronunciation: "ah-eh-roh-PWAIR-toh" },
+        { en: "Train station", native: "Estación de tren", pronunciation: "es-tah-SYON deh tren" },
+        { en: "Bus stop", native: "Parada de autobús", pronunciation: "pah-RAH-dah deh ow-toh-BOOS" },
+        { en: "Hotel", native: "Hotel", pronunciation: "oh-TEL" },
+        { en: "Hospital", native: "Hospital", pronunciation: "os-pee-TAL" },
+        { en: "Pharmacy", native: "Farmacia", pronunciation: "far-MAH-syah" },
+        { en: "Police", native: "Policía", pronunciation: "poh-lee-SEE-ah" },
+        { en: "Toilet / Bathroom", native: "Baño / Aseo", pronunciation: "BAH-nyoh / ah-SEH-oh" },
+        { en: "Restaurant", native: "Restaurante", pronunciation: "res-tow-RAN-teh" },
+        { en: "Market / Shop", native: "Mercado / Tienda", pronunciation: "mer-KAH-doh / TYEN-dah" },
+      ],
+      food: [
+        { en: "Water", native: "Agua", pronunciation: "AH-gwah" },
+        { en: "Food / Eat", native: "Comida / Comer", pronunciation: "koh-MEE-dah / koh-MAIR" },
+        { en: "Bread", native: "Pan", pronunciation: "pan" },
+        { en: "Meat", native: "Carne", pronunciation: "KAR-neh" },
+        { en: "Vegetables", native: "Verduras", pronunciation: "ver-DOO-ras" },
+        { en: "Beer / Wine", native: "Cerveza / Vino", pronunciation: "sair-VEH-sah / VEE-noh" },
+        { en: "Coffee / Tea", native: "Café / Té", pronunciation: "kah-FEH / teh" },
+        { en: "I am vegetarian", native: "Soy vegetariano/a", pronunciation: "soy veh-heh-tah-RYAH-noh" },
+        { en: "The bill / Check please", native: "La cuenta, por favor", pronunciation: "lah KWEN-tah por fah-VOR" },
+      ],
+      transport: [
+        { en: "Taxi", native: "Taxi", pronunciation: "TAK-see" },
+        { en: "Bus", native: "Autobús", pronunciation: "ow-toh-BOOS" },
+        { en: "Train", native: "Tren", pronunciation: "tren" },
+        { en: "Ticket", native: "Billete", pronunciation: "bee-YEH-teh" },
+        { en: "How much?", native: "¿Cuánto cuesta?", pronunciation: "KWAN-toh KWES-tah" },
+        { en: "How far?", native: "¿A qué distancia?", pronunciation: "ah keh dees-TAN-syah" },
+      ],
+      emergencies: [
+        { en: "Help!", native: "¡Ayuda!", pronunciation: "ah-YOO-dah" },
+        { en: "I am sick", native: "Estoy enfermo/a", pronunciation: "es-TOY en-FAIR-moh" },
+        { en: "Doctor", native: "Médico", pronunciation: "MEH-dee-koh" },
+        { en: "Police", native: "Policía", pronunciation: "poh-lee-SEE-ah" },
+        { en: "Fire", native: "Fuego", pronunciation: "FWEH-goh" },
+        { en: "I am lost", native: "Estoy perdido/a", pronunciation: "es-TOY pair-DEE-doh" },
+        { en: "Call an ambulance", native: "Llame una ambulancia", pronunciation: "YAH-meh OO-nah am-boo-LAN-syah" },
+      ],
+      essential: [
+        { en: "How much does this cost?", native: "¿Cuánto cuesta esto?", pronunciation: "KWAN-toh KWES-tah ES-toh" },
+        { en: "Too expensive", native: "Muy caro", pronunciation: "MWEE KAH-roh" },
+        { en: "Where is the toilet?", native: "¿Dónde está el baño?", pronunciation: "DON-deh es-TAH el BAH-nyoh" },
+        { en: "I need…", native: "Necesito…", pronunciation: "neh-seh-SEE-toh" },
+        { en: "I want…", native: "Quiero…", pronunciation: "KYEH-roh" },
+        { en: "I don't want…", native: "No quiero…", pronunciation: "noh KYEH-roh" },
+        { en: "I am allergic to…", native: "Soy alérgico/a a…", pronunciation: "soy ah-LAIR-hee-koh ah" },
+        { en: "My name is…", native: "Me llamo…", pronunciation: "meh YAH-moh" },
+        { en: "I am from…", native: "Soy de…", pronunciation: "soy deh" },
+      ],
+      phrases: [
+        { en: "Sorry, I don't speak Spanish", native: "Lo siento, no hablo español", pronunciation: "loh SYEN-toh noh AH-bloh es-pah-NYOL" },
+        { en: "Can you repeat that?", native: "¿Puede repetir eso?", pronunciation: "PWEH-deh reh-peh-TEER EH-soh" },
+        { en: "Can you speak more slowly?", native: "¿Puede hablar más despacio?", pronunciation: "PWEH-deh ah-BLAR mas des-PAH-syoh" },
+        { en: "Can you write it down?", native: "¿Puede escribirlo?", pronunciation: "PWEH-deh es-kree-BEER-loh" },
+        { en: "What does this mean?", native: "¿Qué significa esto?", pronunciation: "keh seeg-nee-FEE-kah ES-toh" },
+        { en: "Is there someone who speaks English?", native: "¿Hay alguien que hable inglés?", pronunciation: "eye AL-gyen keh AH-bleh een-GLAYS" },
+        { en: "I understand a little", native: "Entiendo un poco", pronunciation: "en-TYEN-doh oon POH-koh" },
+        { en: "Can you help me?", native: "¿Me puede ayudar?", pronunciation: "meh PWEH-deh ah-yoo-DAR" },
+        { en: "Where can I find…?", native: "¿Dónde puedo encontrar…?", pronunciation: "DON-deh PWEH-doh en-kon-TRAR" },
+        { en: "I have a reservation", native: "Tengo una reserva", pronunciation: "TEN-goh OO-nah reh-SAIR-vah" },
+        { en: "Is Wi-Fi available?", native: "¿Hay Wi-Fi disponible?", pronunciation: "eye wee-FEE dees-poh-NEE-bleh" },
+        { en: "Can I have the menu?", native: "¿Me trae la carta?", pronunciation: "meh TRAH-eh lah KAR-tah" },
+      ],
+    }
+  },
+  french: {
+    name: "French",
+    categories: {
+      basic: [
+        { en: "Hello / Hi", native: "Bonjour / Salut", pronunciation: "bohn-ZHOOR / sah-LUE" },
+        { en: "Goodbye", native: "Au revoir", pronunciation: "oh ruh-VWAR" },
+        { en: "Please", native: "S'il vous plaît", pronunciation: "seel voo PLEH" },
+        { en: "Thank you", native: "Merci", pronunciation: "mehr-SEE" },
+        { en: "Sorry / Excuse me", native: "Désolé / Excusez-moi", pronunciation: "day-zoh-LAY / eks-kue-zay-MWAH" },
+        { en: "Yes", native: "Oui", pronunciation: "wee" },
+        { en: "No", native: "Non", pronunciation: "nohn" },
+        { en: "I don't understand", native: "Je ne comprends pas", pronunciation: "zhuh nuh kom-prahn PAH" },
+        { en: "Do you speak English?", native: "Parlez-vous anglais?", pronunciation: "par-lay-VOO ahn-GLEH" },
+        { en: "Help", native: "Aide / À l'aide", pronunciation: "ed / ah LED" },
+      ],
+      numbers: [
+        { en: "1", native: "Un", pronunciation: "uhn" },
+        { en: "2", native: "Deux", pronunciation: "duh" },
+        { en: "3", native: "Trois", pronunciation: "twah" },
+        { en: "4", native: "Quatre", pronunciation: "KAH-truh" },
+        { en: "5", native: "Cinq", pronunciation: "sank" },
+        { en: "6", native: "Six", pronunciation: "sees" },
+        { en: "7", native: "Sept", pronunciation: "set" },
+        { en: "8", native: "Huit", pronunciation: "weet" },
+        { en: "9", native: "Neuf", pronunciation: "nuhf" },
+        { en: "10", native: "Dix", pronunciation: "dees" },
+        { en: "11", native: "Onze", pronunciation: "onz" },
+        { en: "12", native: "Douze", pronunciation: "dooz" },
+        { en: "13", native: "Treize", pronunciation: "trez" },
+        { en: "14", native: "Quatorze", pronunciation: "kah-TORZ" },
+        { en: "15", native: "Quinze", pronunciation: "kanz" },
+        { en: "16", native: "Seize", pronunciation: "sez" },
+        { en: "17", native: "Dix-sept", pronunciation: "dee-SET" },
+        { en: "18", native: "Dix-huit", pronunciation: "dee-ZWEET" },
+        { en: "19", native: "Dix-neuf", pronunciation: "dee-ZNUHF" },
+        { en: "20", native: "Vingt", pronunciation: "vant" },
+        { en: "30", native: "Trente", pronunciation: "trahnt" },
+        { en: "40", native: "Quarante", pronunciation: "kah-RAHNT" },
+        { en: "50", native: "Cinquante", pronunciation: "san-KAHNT" },
+        { en: "60", native: "Soixante", pronunciation: "swah-SAHNT" },
+        { en: "70", native: "Soixante-dix", pronunciation: "swah-sahnt-DEES" },
+        { en: "80", native: "Quatre-vingts", pronunciation: "KAH-truh-van" },
+        { en: "90", native: "Quatre-vingt-dix", pronunciation: "KAH-truh-van-DEES" },
+        { en: "100", native: "Cent", pronunciation: "sahn" },
+        { en: "200", native: "Deux cents", pronunciation: "duh sahn" },
+        { en: "300", native: "Trois cents", pronunciation: "twah sahn" },
+        { en: "400", native: "Quatre cents", pronunciation: "KAH-truh sahn" },
+        { en: "500", native: "Cinq cents", pronunciation: "sank sahn" },
+        { en: "600", native: "Six cents", pronunciation: "see sahn" },
+        { en: "700", native: "Sept cents", pronunciation: "set sahn" },
+        { en: "800", native: "Huit cents", pronunciation: "weet sahn" },
+        { en: "900", native: "Neuf cents", pronunciation: "nuhf sahn" },
+        { en: "1000", native: "Mille", pronunciation: "meel" },
+      ],
+      people: [
+        { en: "I / Me", native: "Je / Moi", pronunciation: "zhuh / mwah" },
+        { en: "You", native: "Tu / Vous", pronunciation: "tue / voo" },
+        { en: "He / She", native: "Il / Elle", pronunciation: "eel / el" },
+        { en: "We", native: "Nous", pronunciation: "noo" },
+        { en: "Man / Woman", native: "Homme / Femme", pronunciation: "om / fam" },
+        { en: "Child", native: "Enfant", pronunciation: "ahn-FAHN" },
+      ],
+      time: [
+        { en: "Today", native: "Aujourd'hui", pronunciation: "oh-zhoor-DWEE" },
+        { en: "Tomorrow", native: "Demain", pronunciation: "duh-MAHN" },
+        { en: "Yesterday", native: "Hier", pronunciation: "yair" },
+        { en: "Now", native: "Maintenant", pronunciation: "mant-NAHN" },
+        { en: "Morning / Afternoon / Evening", native: "Matin / Après-midi / Soir", pronunciation: "mah-TAHN / ah-preh-mee-DEE / swahr" },
+        { en: "What time is it?", native: "Quelle heure est-il?", pronunciation: "kel uhr eh-TEEL" },
+      ],
+      directions: [
+        { en: "Where is…?", native: "Où est…?", pronunciation: "oo EH" },
+        { en: "Left / Right", native: "Gauche / Droite", pronunciation: "gohsh / drwat" },
+        { en: "Straight ahead", native: "Tout droit", pronunciation: "too DRWAH" },
+        { en: "Near / Far", native: "Près / Loin", pronunciation: "preh / lwahn" },
+        { en: "Here / There", native: "Ici / Là", pronunciation: "ee-SEE / lah" },
+        { en: "Airport", native: "Aéroport", pronunciation: "ah-eh-roh-POR" },
+        { en: "Train station", native: "Gare", pronunciation: "gar" },
+        { en: "Bus stop", native: "Arrêt de bus", pronunciation: "ah-REH duh bues" },
+        { en: "Hotel", native: "Hôtel", pronunciation: "oh-TEL" },
+        { en: "Hospital", native: "Hôpital", pronunciation: "oh-pee-TAL" },
+        { en: "Pharmacy", native: "Pharmacie", pronunciation: "far-mah-SEE" },
+        { en: "Police", native: "Police", pronunciation: "poh-LEES" },
+        { en: "Toilet / Bathroom", native: "Toilettes / Salle de bain", pronunciation: "twah-LET / sal duh bahn" },
+        { en: "Restaurant", native: "Restaurant", pronunciation: "res-toh-RAHN" },
+        { en: "Market / Shop", native: "Marché / Magasin", pronunciation: "mar-SHAY / ma-ga-ZAN" },
+      ],
+      food: [
+        { en: "Water", native: "Eau", pronunciation: "oh" },
+        { en: "Food / Eat", native: "Nourriture / Manger", pronunciation: "noo-ree-TUER / mahn-ZHAY" },
+        { en: "Bread", native: "Pain", pronunciation: "pan" },
+        { en: "Meat", native: "Viande", pronunciation: "vyahnd" },
+        { en: "Vegetables", native: "Légumes", pronunciation: "lay-GUME" },
+        { en: "Beer / Wine", native: "Bière / Vin", pronunciation: "byair / vahn" },
+        { en: "Coffee / Tea", native: "Café / Thé", pronunciation: "kah-FAY / tay" },
+        { en: "I am vegetarian", native: "Je suis végétarien/ne", pronunciation: "zhuh swee vay-zhay-tah-RYAN" },
+        { en: "The bill / Check please", native: "L'addition, s'il vous plaît", pronunciation: "lah-dee-SYON seel voo PLEH" },
+      ],
+      transport: [
+        { en: "Taxi", native: "Taxi", pronunciation: "tak-SEE" },
+        { en: "Bus", native: "Bus", pronunciation: "bues" },
+        { en: "Train", native: "Train", pronunciation: "tran" },
+        { en: "Ticket", native: "Billet", pronunciation: "bee-YEH" },
+        { en: "How much?", native: "Combien?", pronunciation: "kom-BYAN" },
+        { en: "How far?", native: "À quelle distance?", pronunciation: "ah kel dees-TAHNS" },
+      ],
+      emergencies: [
+        { en: "Help!", native: "Au secours!", pronunciation: "oh suh-KOOR" },
+        { en: "I am sick", native: "Je suis malade", pronunciation: "zhuh swee mah-LAD" },
+        { en: "Doctor", native: "Médecin", pronunciation: "med-SAN" },
+        { en: "Police", native: "Police", pronunciation: "poh-LEES" },
+        { en: "Fire", native: "Feu", pronunciation: "fuh" },
+        { en: "I am lost", native: "Je suis perdu/e", pronunciation: "zhuh swee pair-DUE" },
+        { en: "Call an ambulance", native: "Appelez une ambulance", pronunciation: "ah-puh-LAY un ahm-bue-LAHNS" },
+      ],
+      essential: [
+        { en: "How much does this cost?", native: "Combien ça coûte?", pronunciation: "kom-BYAN sah KOOT" },
+        { en: "Too expensive", native: "Trop cher", pronunciation: "troh SHAIR" },
+        { en: "Where is the toilet?", native: "Où sont les toilettes?", pronunciation: "oo sohn lay twah-LET" },
+        { en: "I need…", native: "J'ai besoin de…", pronunciation: "zhay buh-ZWAHN duh" },
+        { en: "I want…", native: "Je veux…", pronunciation: "zhuh vuh" },
+        { en: "I don't want…", native: "Je ne veux pas…", pronunciation: "zhuh nuh vuh PAH" },
+        { en: "I am allergic to…", native: "Je suis allergique à…", pronunciation: "zhuh swee ah-lair-ZHEEK ah" },
+        { en: "My name is…", native: "Je m'appelle…", pronunciation: "zhuh mah-PEL" },
+        { en: "I am from…", native: "Je viens de…", pronunciation: "zhuh vyan duh" },
+      ],
+      phrases: [
+        { en: "Sorry, I don't speak French", native: "Désolé, je ne parle pas français", pronunciation: "day-zoh-LAY zhuh nuh parl pah frahn-SAY" },
+        { en: "Can you repeat that?", native: "Pouvez-vous répéter?", pronunciation: "poo-vay-VOO ray-pay-TAY" },
+        { en: "Can you speak more slowly?", native: "Pouvez-vous parler plus lentement?", pronunciation: "poo-vay-VOO par-LAY plue lahnt-MAHN" },
+        { en: "Can you write it down?", native: "Pouvez-vous l'écrire?", pronunciation: "poo-vay-VOO lay-KREER" },
+        { en: "What does this mean?", native: "Qu'est-ce que ça veut dire?", pronunciation: "kes-kuh sah vuh DEER" },
+        { en: "Is there someone who speaks English?", native: "Y a-t-il quelqu'un qui parle anglais?", pronunciation: "ee ah-TEEL kel-KAN kee parl ahn-GLEH" },
+        { en: "I understand a little", native: "Je comprends un peu", pronunciation: "zhuh kom-PRAHN uhn puh" },
+        { en: "Can you help me?", native: "Pouvez-vous m'aider?", pronunciation: "poo-vay-VOO meh-DAY" },
+        { en: "Where can I find…?", native: "Où puis-je trouver…?", pronunciation: "oo PWEE-zhuh troo-VAY" },
+        { en: "I have a reservation", native: "J'ai une réservation", pronunciation: "zhay oon ray-zair-vah-SYON" },
+        { en: "Is Wi-Fi available?", native: "Y a-t-il le Wi-Fi?", pronunciation: "ee ah-TEEL luh wee-FEE" },
+        { en: "Can I have the menu?", native: "La carte, s'il vous plaît", pronunciation: "lah kart seel voo PLEH" },
+      ],
+    }
+  },
+  german: {
+    name: "German",
+    categories: {
+      basic: [
+        { en: "Hello / Hi", native: "Hallo / Guten Tag", pronunciation: "HAH-loh / GOO-ten tahk" },
+        { en: "Goodbye", native: "Auf Wiedersehen", pronunciation: "owf VEE-der-zay-en" },
+        { en: "Please", native: "Bitte", pronunciation: "BIT-teh" },
+        { en: "Thank you", native: "Danke", pronunciation: "DAHN-keh" },
+        { en: "Sorry / Excuse me", native: "Entschuldigung", pronunciation: "ent-SHOOL-dee-goong" },
+        { en: "Yes", native: "Ja", pronunciation: "yah" },
+        { en: "No", native: "Nein", pronunciation: "nyne" },
+        { en: "I don't understand", native: "Ich verstehe nicht", pronunciation: "ikh fair-SHTAY-eh nikht" },
+        { en: "Do you speak English?", native: "Sprechen Sie Englisch?", pronunciation: "SHPREH-khen zee ENG-lish" },
+        { en: "Help", native: "Hilfe", pronunciation: "HIL-feh" },
+      ],
+      numbers: [
+        { en: "1", native: "Eins", pronunciation: "ayns" },
+        { en: "2", native: "Zwei", pronunciation: "tsvye" },
+        { en: "3", native: "Drei", pronunciation: "dry" },
+        { en: "4", native: "Vier", pronunciation: "feer" },
+        { en: "5", native: "Fünf", pronunciation: "fuenf" },
+        { en: "6", native: "Sechs", pronunciation: "zeks" },
+        { en: "7", native: "Sieben", pronunciation: "ZEE-ben" },
+        { en: "8", native: "Acht", pronunciation: "akht" },
+        { en: "9", native: "Neun", pronunciation: "noyn" },
+        { en: "10", native: "Zehn", pronunciation: "tsayn" },
+        { en: "11", native: "Elf", pronunciation: "elf" },
+        { en: "12", native: "Zwölf", pronunciation: "tsverlf" },
+        { en: "13", native: "Dreizehn", pronunciation: "DRY-tsayn" },
+        { en: "14", native: "Vierzehn", pronunciation: "FEER-tsayn" },
+        { en: "15", native: "Fünfzehn", pronunciation: "FUENF-tsayn" },
+        { en: "16", native: "Sechzehn", pronunciation: "ZEK-tsayn" },
+        { en: "17", native: "Siebzehn", pronunciation: "ZEEP-tsayn" },
+        { en: "18", native: "Achtzehn", pronunciation: "AKH-tsayn" },
+        { en: "19", native: "Neunzehn", pronunciation: "NOYN-tsayn" },
+        { en: "20", native: "Zwanzig", pronunciation: "TSVAN-tsikh" },
+        { en: "30", native: "Dreißig", pronunciation: "DRY-sikh" },
+        { en: "40", native: "Vierzig", pronunciation: "FEER-tsikh" },
+        { en: "50", native: "Fünfzig", pronunciation: "FUENF-tsikh" },
+        { en: "60", native: "Sechzig", pronunciation: "ZEK-tsikh" },
+        { en: "70", native: "Siebzig", pronunciation: "ZEEP-tsikh" },
+        { en: "80", native: "Achtzig", pronunciation: "AKH-tsikh" },
+        { en: "90", native: "Neunzig", pronunciation: "NOYN-tsikh" },
+        { en: "100", native: "Hundert", pronunciation: "HOON-dert" },
+        { en: "200", native: "Zweihundert", pronunciation: "TSVYE-hoon-dert" },
+        { en: "300", native: "Dreihundert", pronunciation: "DRY-hoon-dert" },
+        { en: "400", native: "Vierhundert", pronunciation: "FEER-hoon-dert" },
+        { en: "500", native: "Fünfhundert", pronunciation: "FUENF-hoon-dert" },
+        { en: "600", native: "Sechshundert", pronunciation: "ZEKS-hoon-dert" },
+        { en: "700", native: "Siebenhundert", pronunciation: "ZEE-ben-hoon-dert" },
+        { en: "800", native: "Achthundert", pronunciation: "AKHT-hoon-dert" },
+        { en: "900", native: "Neunhundert", pronunciation: "NOYN-hoon-dert" },
+        { en: "1000", native: "Tausend", pronunciation: "TOW-zent" },
+      ],
+      people: [
+        { en: "I / Me", native: "Ich / Mich", pronunciation: "ikh / mikh" },
+        { en: "You", native: "Du / Sie", pronunciation: "doo / zee" },
+        { en: "He / She", native: "Er / Sie", pronunciation: "air / zee" },
+        { en: "We", native: "Wir", pronunciation: "veer" },
+        { en: "Man / Woman", native: "Mann / Frau", pronunciation: "mahn / frow" },
+        { en: "Child", native: "Kind", pronunciation: "kint" },
+      ],
+      time: [
+        { en: "Today", native: "Heute", pronunciation: "HOY-teh" },
+        { en: "Tomorrow", native: "Morgen", pronunciation: "MOR-gen" },
+        { en: "Yesterday", native: "Gestern", pronunciation: "GES-tern" },
+        { en: "Now", native: "Jetzt", pronunciation: "yetst" },
+        { en: "Morning / Afternoon / Evening", native: "Morgen / Nachmittag / Abend", pronunciation: "MOR-gen / NAKH-mi-tahk / AH-bent" },
+        { en: "What time is it?", native: "Wie spät ist es?", pronunciation: "vee shpayt ist es" },
+      ],
+      directions: [
+        { en: "Where is…?", native: "Wo ist…?", pronunciation: "voh ist" },
+        { en: "Left / Right", native: "Links / Rechts", pronunciation: "links / rekhts" },
+        { en: "Straight ahead", native: "Geradeaus", pronunciation: "geh-RAH-deh-ows" },
+        { en: "Near / Far", native: "Nah / Weit", pronunciation: "nah / vyte" },
+        { en: "Here / There", native: "Hier / Dort", pronunciation: "heer / dort" },
+        { en: "Airport", native: "Flughafen", pronunciation: "FLOOK-hah-fen" },
+        { en: "Train station", native: "Bahnhof", pronunciation: "BAHN-hohf" },
+        { en: "Bus stop", native: "Bushaltestelle", pronunciation: "BOOS-hal-teh-shtel-eh" },
+        { en: "Hotel", native: "Hotel", pronunciation: "hoh-TEL" },
+        { en: "Hospital", native: "Krankenhaus", pronunciation: "KRAN-ken-hows" },
+        { en: "Pharmacy", native: "Apotheke", pronunciation: "ah-poh-TAY-keh" },
+        { en: "Police", native: "Polizei", pronunciation: "poh-lee-TSYE" },
+        { en: "Toilet / Bathroom", pronunciation: "twa-LET-eh / BAH-tsi-mer", native: "Toilette / Badezimmer" },
+        { en: "Restaurant", native: "Restaurant", pronunciation: "res-toh-RAHNG" },
+        { en: "Market / Shop", native: "Markt / Geschäft", pronunciation: "markt / geh-SHEFT" },
+      ],
+      food: [
+        { en: "Water", native: "Wasser", pronunciation: "VAH-ser" },
+        { en: "Food / Eat", native: "Essen", pronunciation: "ES-sen" },
+        { en: "Bread", native: "Brot", pronunciation: "broht" },
+        { en: "Meat", native: "Fleisch", pronunciation: "flysh" },
+        { en: "Vegetables", native: "Gemüse", pronunciation: "geh-MUE-zeh" },
+        { en: "Beer / Wine", native: "Bier / Wein", pronunciation: "beer / vyne" },
+        { en: "Coffee / Tea", native: "Kaffee / Tee", pronunciation: "KAF-fay / tay" },
+        { en: "I am vegetarian", native: "Ich bin Vegetarier/in", pronunciation: "ikh bin veh-geh-TAH-ryair" },
+        { en: "The bill / Check please", native: "Die Rechnung, bitte", pronunciation: "dee REKH-noong BIT-teh" },
+      ],
+      transport: [
+        { en: "Taxi", native: "Taxi", pronunciation: "TAK-see" },
+        { en: "Bus", native: "Bus", pronunciation: "boos" },
+        { en: "Train", native: "Zug", pronunciation: "tsook" },
+        { en: "Ticket", native: "Fahrkarte", pronunciation: "FAR-kar-teh" },
+        { en: "How much?", native: "Wie viel?", pronunciation: "vee feel" },
+        { en: "How far?", native: "Wie weit?", pronunciation: "vee vyte" },
+      ],
+      emergencies: [
+        { en: "Help!", native: "Hilfe!", pronunciation: "HIL-feh" },
+        { en: "I am sick", native: "Ich bin krank", pronunciation: "ikh bin krank" },
+        { en: "Doctor", native: "Arzt", pronunciation: "artst" },
+        { en: "Police", native: "Polizei", pronunciation: "poh-lee-TSYE" },
+        { en: "Fire", native: "Feuer", pronunciation: "FOY-er" },
+        { en: "I am lost", native: "Ich habe mich verirrt", pronunciation: "ikh HAH-beh mikh fair-ERT" },
+        { en: "Call an ambulance", native: "Rufen Sie einen Krankenwagen", pronunciation: "ROO-fen zee EY-nen KRAN-ken-vah-gen" },
+      ],
+      essential: [
+        { en: "How much does this cost?", native: "Wie viel kostet das?", pronunciation: "vee feel KOS-tet das" },
+        { en: "Too expensive", native: "Zu teuer", pronunciation: "tsoo TOY-er" },
+        { en: "Where is the toilet?", native: "Wo ist die Toilette?", pronunciation: "voh ist dee twa-LET-eh" },
+        { en: "I need…", native: "Ich brauche…", pronunciation: "ikh BROW-kheh" },
+        { en: "I want…", native: "Ich möchte…", pronunciation: "ikh MERKH-teh" },
+        { en: "I don't want…", native: "Ich möchte nicht…", pronunciation: "ikh MERKH-teh nikht" },
+        { en: "I am allergic to…", native: "Ich bin allergisch gegen…", pronunciation: "ikh bin ah-LAIR-gish GAY-gen" },
+        { en: "My name is…", native: "Ich heiße…", pronunciation: "ikh HY-seh" },
+        { en: "I am from…", native: "Ich komme aus…", pronunciation: "ikh KOM-eh ows" },
+      ],
+      phrases: [
+        { en: "Sorry, I don't speak German", native: "Es tut mir leid, ich spreche kein Deutsch", pronunciation: "es toot meer lyte ikh SHPREH-kheh kyne doytch" },
+        { en: "Can you repeat that?", native: "Können Sie das wiederholen?", pronunciation: "KER-nen zee das VEE-der-hoh-len" },
+        { en: "Can you speak more slowly?", native: "Können Sie langsamer sprechen?", pronunciation: "KER-nen zee LANG-zah-mer SHPREH-khen" },
+        { en: "Can you write it down?", native: "Können Sie das aufschreiben?", pronunciation: "KER-nen zee das OWF-shry-ben" },
+        { en: "What does this mean?", native: "Was bedeutet das?", pronunciation: "vas beh-DOY-tet das" },
+        { en: "Is there someone who speaks English?", native: "Gibt es jemanden der Englisch spricht?", pronunciation: "gipt es YEH-man-den dair ENG-lish shprikht" },
+        { en: "I understand a little", native: "Ich verstehe ein bisschen", pronunciation: "ikh fair-SHTAY-eh yn BIS-khen" },
+        { en: "Can you help me?", native: "Können Sie mir helfen?", pronunciation: "KER-nen zee meer HEL-fen" },
+        { en: "Where can I find…?", native: "Wo kann ich … finden?", pronunciation: "voh kan ikh … FIN-den" },
+        { en: "I have a reservation", native: "Ich habe eine Reservierung", pronunciation: "ikh HAH-beh EY-neh reh-zair-VEE-roong" },
+        { en: "Is Wi-Fi available?", native: "Gibt es WLAN?", pronunciation: "gipt es VAY-lan" },
+        { en: "Can I have the menu?", native: "Die Speisekarte, bitte", pronunciation: "dee SHPY-zeh-kar-teh BIT-teh" },
+      ],
+    }
+  },
+  italian: {
+    name: "Italian",
+    categories: {
+      basic: [
+        { en: "Hello / Hi", native: "Ciao / Salve", pronunciation: "CHOW / SAL-veh" },
+        { en: "Goodbye", native: "Arrivederci", pronunciation: "ah-ree-veh-DAIR-chee" },
+        { en: "Please", native: "Per favore", pronunciation: "pair fah-VO-reh" },
+        { en: "Thank you", native: "Grazie", pronunciation: "GRAT-syeh" },
+        { en: "Sorry / Excuse me", native: "Mi dispiace / Scusi", pronunciation: "mee dees-PYAH-cheh / SKOO-zee" },
+        { en: "Yes", native: "Sì", pronunciation: "see" },
+        { en: "No", native: "No", pronunciation: "noh" },
+        { en: "I don't understand", native: "Non capisco", pronunciation: "non kah-PEES-koh" },
+        { en: "Do you speak English?", native: "Parla inglese?", pronunciation: "PAR-lah een-GLEH-zeh" },
+        { en: "Help", native: "Aiuto", pronunciation: "ah-YOO-toh" },
+      ],
+      numbers: [
+        { en: "1", native: "Uno", pronunciation: "OO-noh" },
+        { en: "2", native: "Due", pronunciation: "DOO-eh" },
+        { en: "3", native: "Tre", pronunciation: "treh" },
+        { en: "4", native: "Quattro", pronunciation: "KWAT-troh" },
+        { en: "5", native: "Cinque", pronunciation: "CHEEN-kweh" },
+        { en: "6", native: "Sei", pronunciation: "seh-ee" },
+        { en: "7", native: "Sette", pronunciation: "SET-teh" },
+        { en: "8", native: "Otto", pronunciation: "OT-toh" },
+        { en: "9", native: "Nove", pronunciation: "NOH-veh" },
+        { en: "10", native: "Dieci", pronunciation: "DYEH-chee" },
+        { en: "11", native: "Undici", pronunciation: "OON-dee-chee" },
+        { en: "12", native: "Dodici", pronunciation: "DOH-dee-chee" },
+        { en: "13", native: "Tredici", pronunciation: "TREH-dee-chee" },
+        { en: "14", native: "Quattordici", pronunciation: "kwat-TOR-dee-chee" },
+        { en: "15", native: "Quindici", pronunciation: "KWEEN-dee-chee" },
+        { en: "16", native: "Sedici", pronunciation: "SEH-dee-chee" },
+        { en: "17", native: "Diciassette", pronunciation: "dee-chah-SET-teh" },
+        { en: "18", native: "Diciotto", pronunciation: "dee-CHOT-toh" },
+        { en: "19", native: "Diciannove", pronunciation: "dee-chah-NOH-veh" },
+        { en: "20", native: "Venti", pronunciation: "VEN-tee" },
+        { en: "30", native: "Trenta", pronunciation: "TREN-tah" },
+        { en: "40", native: "Quaranta", pronunciation: "kwah-RAN-tah" },
+        { en: "50", native: "Cinquanta", pronunciation: "cheen-KWAN-tah" },
+        { en: "60", native: "Sessanta", pronunciation: "ses-SAN-tah" },
+        { en: "70", native: "Settanta", pronunciation: "set-TAN-tah" },
+        { en: "80", native: "Ottanta", pronunciation: "ot-TAN-tah" },
+        { en: "90", native: "Novanta", pronunciation: "noh-VAN-tah" },
+        { en: "100", native: "Cento", pronunciation: "CHEN-toh" },
+        { en: "200", native: "Duecento", pronunciation: "doo-eh-CHEN-toh" },
+        { en: "300", native: "Trecento", pronunciation: "treh-CHEN-toh" },
+        { en: "400", native: "Quattrocento", pronunciation: "kwat-troh-CHEN-toh" },
+        { en: "500", native: "Cinquecento", pronunciation: "cheen-kweh-CHEN-toh" },
+        { en: "600", native: "Seicento", pronunciation: "seh-ee-CHEN-toh" },
+        { en: "700", native: "Settecento", pronunciation: "set-teh-CHEN-toh" },
+        { en: "800", native: "Ottocento", pronunciation: "ot-toh-CHEN-toh" },
+        { en: "900", native: "Novecento", pronunciation: "noh-veh-CHEN-toh" },
+        { en: "1000", native: "Mille", pronunciation: "MEEL-leh" },
+      ],
+      people: [
+        { en: "I / Me", native: "Io / Me", pronunciation: "EE-oh / meh" },
+        { en: "You", native: "Tu / Lei", pronunciation: "too / LEH-ee" },
+        { en: "He / She", native: "Lui / Lei", pronunciation: "LOO-ee / LEH-ee" },
+        { en: "We", native: "Noi", pronunciation: "NOH-ee" },
+        { en: "Man / Woman", native: "Uomo / Donna", pronunciation: "WO-moh / DON-nah" },
+        { en: "Child", native: "Bambino/a", pronunciation: "bam-BEE-noh" },
+      ],
+      time: [
+        { en: "Today", native: "Oggi", pronunciation: "OD-jee" },
+        { en: "Tomorrow", native: "Domani", pronunciation: "doh-MAH-nee" },
+        { en: "Yesterday", native: "Ieri", pronunciation: "YEH-ree" },
+        { en: "Now", native: "Adesso", pronunciation: "ah-DES-soh" },
+        { en: "Morning / Afternoon / Evening", native: "Mattina / Pomeriggio / Sera", pronunciation: "mat-TEE-nah / poh-meh-REED-joh / SEH-rah" },
+        { en: "What time is it?", native: "Che ore sono?", pronunciation: "keh OH-reh SOH-noh" },
+      ],
+      directions: [
+        { en: "Where is…?", native: "Dove è…?", pronunciation: "DOH-veh eh" },
+        { en: "Left / Right", native: "Sinistra / Destra", pronunciation: "see-NEES-trah / DES-trah" },
+        { en: "Straight ahead", native: "Dritto", pronunciation: "DREET-toh" },
+        { en: "Near / Far", native: "Vicino / Lontano", pronunciation: "vee-CHEE-noh / lon-TAH-noh" },
+        { en: "Here / There", native: "Qui / Lì", pronunciation: "kwee / lee" },
+        { en: "Airport", native: "Aeroporto", pronunciation: "ah-eh-roh-POR-toh" },
+        { en: "Train station", native: "Stazione", pronunciation: "stah-TSYOH-neh" },
+        { en: "Bus stop", native: "Fermata dell'autobus", pronunciation: "fair-MAH-tah del OW-toh-boos" },
+        { en: "Hotel", native: "Albergo", pronunciation: "al-BAIR-goh" },
+        { en: "Hospital", native: "Ospedale", pronunciation: "os-peh-DAH-leh" },
+        { en: "Pharmacy", native: "Farmacia", pronunciation: "far-MAH-chah" },
+        { en: "Police", native: "Polizia", pronunciation: "poh-LEET-syah" },
+        { en: "Toilet / Bathroom", native: "Bagno / Toilette", pronunciation: "BAH-nyoh / twa-LET" },
+        { en: "Restaurant", native: "Ristorante", pronunciation: "rees-toh-RAN-teh" },
+        { en: "Market / Shop", native: "Mercato / Negozio", pronunciation: "mer-KAH-toh / neh-GOT-syoh" },
+      ],
+      food: [
+        { en: "Water", native: "Acqua", pronunciation: "AH-kwah" },
+        { en: "Food / Eat", native: "Cibo / Mangiare", pronunciation: "CHEE-boh / man-JAH-reh" },
+        { en: "Bread", native: "Pane", pronunciation: "PAH-neh" },
+        { en: "Meat", native: "Carne", pronunciation: "KAR-neh" },
+        { en: "Vegetables", native: "Verdure", pronunciation: "ver-DOO-reh" },
+        { en: "Beer / Wine", native: "Birra / Vino", pronunciation: "BEER-rah / VEE-noh" },
+        { en: "Coffee / Tea", native: "Caffè / Tè", pronunciation: "kaf-FEH / teh" },
+        { en: "I am vegetarian", native: "Sono vegetariano/a", pronunciation: "SOH-noh veh-jeh-tah-RYAH-noh" },
+        { en: "The bill / Check please", native: "Il conto, per favore", pronunciation: "eel KON-toh pair fah-VO-reh" },
+      ],
+      transport: [
+        { en: "Taxi", native: "Taxi", pronunciation: "TAK-see" },
+        { en: "Bus", native: "Autobus", pronunciation: "OW-toh-boos" },
+        { en: "Train", native: "Treno", pronunciation: "TREH-noh" },
+        { en: "Ticket", native: "Biglietto", pronunciation: "bee-LYET-toh" },
+        { en: "How much?", native: "Quanto costa?", pronunciation: "KWAN-toh KOS-tah" },
+        { en: "How far?", native: "Quanto è lontano?", pronunciation: "KWAN-toh eh lon-TAH-noh" },
+      ],
+      emergencies: [
+        { en: "Help!", native: "Aiuto!", pronunciation: "ah-YOO-toh" },
+        { en: "I am sick", native: "Sono malato/a", pronunciation: "SOH-noh mah-LAH-toh" },
+        { en: "Doctor", native: "Medico", pronunciation: "MEH-dee-koh" },
+        { en: "Police", native: "Polizia", pronunciation: "poh-LEET-syah" },
+        { en: "Fire", native: "Fuoco", pronunciation: "FWOH-koh" },
+        { en: "I am lost", native: "Mi sono perso/a", pronunciation: "mee SOH-noh PAIR-soh" },
+        { en: "Call an ambulance", native: "Chiami un'ambulanza", pronunciation: "KYAH-mee oon am-boo-LAN-tsah" },
+      ],
+      essential: [
+        { en: "How much does this cost?", native: "Quanto costa questo?", pronunciation: "KWAN-toh KOS-tah KWES-toh" },
+        { en: "Too expensive", native: "Troppo caro", pronunciation: "TROP-poh KAH-roh" },
+        { en: "Where is the toilet?", native: "Dov'è il bagno?", pronunciation: "doh-VEH eel BAH-nyoh" },
+        { en: "I need…", native: "Ho bisogno di…", pronunciation: "oh bee-ZOH-nyoh dee" },
+        { en: "I want…", native: "Voglio…", pronunciation: "VOH-lyoh" },
+        { en: "I don't want…", native: "Non voglio…", pronunciation: "non VOH-lyoh" },
+        { en: "I am allergic to…", native: "Sono allergico/a a…", pronunciation: "SOH-noh al-LAIR-jee-koh ah" },
+        { en: "My name is…", native: "Mi chiamo…", pronunciation: "mee KYAH-moh" },
+        { en: "I am from…", native: "Vengo da…", pronunciation: "VEN-goh dah" },
+      ],
+      phrases: [
+        { en: "Sorry, I don't speak Italian", native: "Mi dispiace, non parlo italiano", pronunciation: "mee dees-PYAH-cheh non PAR-loh ee-tah-LYAH-noh" },
+        { en: "Can you repeat that?", native: "Può ripetere?", pronunciation: "PWOH ree-peh-TEH-reh" },
+        { en: "Can you speak more slowly?", native: "Può parlare più lentamente?", pronunciation: "PWOH par-LAH-reh pyoo len-tah-MEN-teh" },
+        { en: "Can you write it down?", native: "Può scriverlo?", pronunciation: "PWOH skreev-EHR-loh" },
+        { en: "What does this mean?", native: "Cosa significa questo?", pronunciation: "KOH-zah seeg-NEE-fee-kah KWES-toh" },
+        { en: "Is there someone who speaks English?", native: "C'è qualcuno che parla inglese?", pronunciation: "cheh kwal-KOO-noh keh PAR-lah een-GLEH-zeh" },
+        { en: "I understand a little", native: "Capisco un po'", pronunciation: "kah-PEES-koh oon poh" },
+        { en: "Can you help me?", native: "Mi può aiutare?", pronunciation: "mee PWOH ah-yoo-TAH-reh" },
+        { en: "Where can I find…?", native: "Dove posso trovare…?", pronunciation: "DOH-veh POS-soh troh-VAH-reh" },
+        { en: "I have a reservation", native: "Ho una prenotazione", pronunciation: "oh OO-nah preh-noh-tah-TSYOH-neh" },
+        { en: "Is Wi-Fi available?", native: "C'è il Wi-Fi?", pronunciation: "cheh eel wee-FEE" },
+        { en: "Can I have the menu?", native: "Il menu, per favore", pronunciation: "eel meh-NOO pair fah-VO-reh" },
+      ],
+    }
+  },
+  portuguese: {
+    name: "Portuguese",
+    categories: {
+      basic: [
+        { en: "Hello / Hi", native: "Olá / Oi", pronunciation: "oh-LAH / oy" },
+        { en: "Goodbye", native: "Adeus / Tchau", pronunciation: "ah-DEH-oos / chow" },
+        { en: "Please", native: "Por favor", pronunciation: "por fah-VOR" },
+        { en: "Thank you", native: "Obrigado/a", pronunciation: "oh-bree-GAH-doo" },
+        { en: "Sorry / Excuse me", native: "Desculpe / Com licença", pronunciation: "des-KOOL-peh / kom lee-SEN-sah" },
+        { en: "Yes", native: "Sim", pronunciation: "seem" },
+        { en: "No", native: "Não", pronunciation: "nown" },
+        { en: "I don't understand", native: "Não entendo", pronunciation: "nown en-TEN-doo" },
+        { en: "Do you speak English?", native: "Fala inglês?", pronunciation: "FAH-lah een-GLAYS" },
+        { en: "Help", native: "Ajuda", pronunciation: "ah-ZHOO-dah" },
+      ],
+      numbers: [
+        { en: "1", native: "Um / Uma", pronunciation: "oom / OO-mah" },
+        { en: "2", native: "Dois / Duas", pronunciation: "doysh / DOO-as" },
+        { en: "3", native: "Três", pronunciation: "trays" },
+        { en: "4", native: "Quatro", pronunciation: "KWAH-troo" },
+        { en: "5", native: "Cinco", pronunciation: "SEEN-koo" },
+        { en: "6", native: "Seis", pronunciation: "saysh" },
+        { en: "7", native: "Sete", pronunciation: "SEH-teh" },
+        { en: "8", native: "Oito", pronunciation: "OY-too" },
+        { en: "9", native: "Nove", pronunciation: "NOH-veh" },
+        { en: "10", native: "Dez", pronunciation: "desh" },
+        { en: "11", native: "Onze", pronunciation: "ON-zeh" },
+        { en: "12", native: "Doze", pronunciation: "DOH-zeh" },
+        { en: "13", native: "Treze", pronunciation: "TREH-zeh" },
+        { en: "14", native: "Catorze", pronunciation: "kah-TOR-zeh" },
+        { en: "15", native: "Quinze", pronunciation: "KEEN-zeh" },
+        { en: "16", native: "Dezesseis", pronunciation: "deh-zeh-SAYSH" },
+        { en: "17", native: "Dezessete", pronunciation: "deh-zeh-SEH-teh" },
+        { en: "18", native: "Dezoito", pronunciation: "deh-ZOY-too" },
+        { en: "19", native: "Dezenove", pronunciation: "deh-zeh-NOH-veh" },
+        { en: "20", native: "Vinte", pronunciation: "VEEN-teh" },
+        { en: "30", native: "Trinta", pronunciation: "TREEN-tah" },
+        { en: "40", native: "Quarenta", pronunciation: "kwah-REN-tah" },
+        { en: "50", native: "Cinquenta", pronunciation: "seen-KWEN-tah" },
+        { en: "60", native: "Sessenta", pronunciation: "seh-SEN-tah" },
+        { en: "70", native: "Setenta", pronunciation: "seh-TEN-tah" },
+        { en: "80", native: "Oitenta", pronunciation: "oy-TEN-tah" },
+        { en: "90", native: "Noventa", pronunciation: "noh-VEN-tah" },
+        { en: "100", native: "Cem", pronunciation: "saym" },
+        { en: "200", native: "Duzentos", pronunciation: "doo-ZEN-toos" },
+        { en: "300", native: "Trezentos", pronunciation: "treh-ZEN-toos" },
+        { en: "400", native: "Quatrocentos", pronunciation: "kwah-troh-SEN-toos" },
+        { en: "500", native: "Quinhentos", pronunciation: "keen-YEN-toos" },
+        { en: "600", native: "Seiscentos", pronunciation: "saysh-SEN-toos" },
+        { en: "700", native: "Setecentos", pronunciation: "seh-teh-SEN-toos" },
+        { en: "800", native: "Oitocentos", pronunciation: "oy-toh-SEN-toos" },
+        { en: "900", native: "Novecentos", pronunciation: "noh-veh-SEN-toos" },
+        { en: "1000", native: "Mil", pronunciation: "meel" },
+      ],
+      people: [
+        { en: "I / Me", native: "Eu / Me", pronunciation: "eh-oo / meh" },
+        { en: "You", native: "Tu / Você", pronunciation: "too / voh-SAY" },
+        { en: "He / She", native: "Ele / Ela", pronunciation: "EH-leh / EH-lah" },
+        { en: "We", native: "Nós", pronunciation: "nosh" },
+        { en: "Man / Woman", native: "Homem / Mulher", pronunciation: "OH-maym / moo-LYAIR" },
+        { en: "Child", native: "Criança", pronunciation: "kree-AN-sah" },
+      ],
+      time: [
+        { en: "Today", native: "Hoje", pronunciation: "OH-zheh" },
+        { en: "Tomorrow", native: "Amanhã", pronunciation: "ah-mah-NYAH" },
+        { en: "Yesterday", native: "Ontem", pronunciation: "ON-taym" },
+        { en: "Now", native: "Agora", pronunciation: "ah-GOH-rah" },
+        { en: "Morning / Afternoon / Evening", native: "Manhã / Tarde / Noite", pronunciation: "mah-NYAH / TAR-deh / NOY-teh" },
+        { en: "What time is it?", native: "Que horas são?", pronunciation: "keh OH-rahs sowm" },
+      ],
+      directions: [
+        { en: "Where is…?", native: "Onde fica…?", pronunciation: "ON-deh FEE-kah" },
+        { en: "Left / Right", native: "Esquerda / Direita", pronunciation: "es-KAIR-dah / dee-RAY-tah" },
+        { en: "Straight ahead", native: "Em frente", pronunciation: "aym FREN-teh" },
+        { en: "Near / Far", native: "Perto / Longe", pronunciation: "PAIR-too / LON-zheh" },
+        { en: "Here / There", native: "Aqui / Lá", pronunciation: "ah-KEE / lah" },
+        { en: "Airport", native: "Aeroporto", pronunciation: "ah-eh-roh-POR-too" },
+        { en: "Train station", native: "Estação de trem", pronunciation: "es-tah-SOWM deh traym" },
+        { en: "Bus stop", pronunciation: "pah-RAH-dah deh OH-nee-boos", native: "Parada de ônibus" },
+        { en: "Hotel", native: "Hotel", pronunciation: "oh-TEL" },
+        { en: "Hospital", native: "Hospital", pronunciation: "os-pee-TAL" },
+        { en: "Pharmacy", native: "Farmácia", pronunciation: "far-MAH-syah" },
+        { en: "Police", native: "Polícia", pronunciation: "poh-LEE-syah" },
+        { en: "Toilet / Bathroom", native: "Banheiro / WC", pronunciation: "bah-NYAY-roo" },
+        { en: "Restaurant", native: "Restaurante", pronunciation: "hes-tow-RAN-teh" },
+        { en: "Market / Shop", native: "Mercado / Loja", pronunciation: "mer-KAH-doo / LOH-zhah" },
+      ],
+      food: [
+        { en: "Water", native: "Água", pronunciation: "AH-gwah" },
+        { en: "Food / Eat", native: "Comida / Comer", pronunciation: "koh-MEE-dah / koh-MAIR" },
+        { en: "Bread", native: "Pão", pronunciation: "powm" },
+        { en: "Meat", native: "Carne", pronunciation: "KAR-neh" },
+        { en: "Vegetables", native: "Legumes", pronunciation: "leh-GOO-mehs" },
+        { en: "Beer / Wine", native: "Cerveja / Vinho", pronunciation: "ser-VEH-zhah / VEEN-yoo" },
+        { en: "Coffee / Tea", native: "Café / Chá", pronunciation: "kah-FEH / shah" },
+        { en: "I am vegetarian", native: "Sou vegetariano/a", pronunciation: "soh veh-zheh-tah-RYAH-noo" },
+        { en: "The bill / Check please", native: "A conta, por favor", pronunciation: "ah KON-tah por fah-VOR" },
+      ],
+      transport: [
+        { en: "Taxi", native: "Táxi", pronunciation: "TAK-see" },
+        { en: "Bus", native: "Ônibus", pronunciation: "OH-nee-boos" },
+        { en: "Train", native: "Trem", pronunciation: "traym" },
+        { en: "Ticket", native: "Bilhete", pronunciation: "beel-YEH-teh" },
+        { en: "How much?", native: "Quanto custa?", pronunciation: "KWAN-too KOOS-tah" },
+        { en: "How far?", native: "Qual a distância?", pronunciation: "kwal ah dees-TAN-syah" },
+      ],
+      emergencies: [
+        { en: "Help!", native: "Socorro!", pronunciation: "soh-KOH-hoo" },
+        { en: "I am sick", native: "Estou doente", pronunciation: "es-TOH doh-EN-teh" },
+        { en: "Doctor", native: "Médico", pronunciation: "MEH-dee-koo" },
+        { en: "Police", native: "Polícia", pronunciation: "poh-LEE-syah" },
+        { en: "Fire", native: "Fogo", pronunciation: "FOH-goo" },
+        { en: "I am lost", native: "Estou perdido/a", pronunciation: "es-TOH pair-DEE-doo" },
+        { en: "Call an ambulance", native: "Chame uma ambulância", pronunciation: "SHAH-meh OO-mah am-boo-LAN-syah" },
+      ],
+      essential: [
+        { en: "How much does this cost?", native: "Quanto custa isso?", pronunciation: "KWAN-too KOOS-tah EE-soo" },
+        { en: "Too expensive", native: "Muito caro", pronunciation: "MWEE-too KAH-roo" },
+        { en: "Where is the toilet?", native: "Onde fica o banheiro?", pronunciation: "ON-deh FEE-kah oo bah-NYAY-roo" },
+        { en: "I need…", native: "Eu preciso de…", pronunciation: "eh-oo preh-SEE-zoo deh" },
+        { en: "I want…", native: "Eu quero…", pronunciation: "eh-oo KEH-roo" },
+        { en: "I don't want…", native: "Eu não quero…", pronunciation: "eh-oo nown KEH-roo" },
+        { en: "I am allergic to…", native: "Sou alérgico/a a…", pronunciation: "soh ah-LAIR-zhee-koo ah" },
+        { en: "My name is…", native: "Meu nome é…", pronunciation: "meh-oo NOH-meh eh" },
+        { en: "I am from…", native: "Sou de…", pronunciation: "soh deh" },
+      ],
+      phrases: [
+        { en: "Sorry, I don't speak Portuguese", native: "Desculpe, não falo português", pronunciation: "des-KOOL-peh nown FAH-loo por-too-GAYS" },
+        { en: "Can you repeat that?", native: "Pode repetir?", pronunciation: "POH-deh reh-peh-TEER" },
+        { en: "Can you speak more slowly?", native: "Pode falar mais devagar?", pronunciation: "POH-deh fah-LAR mysh deh-vah-GAR" },
+        { en: "Can you write it down?", native: "Pode escrever?", pronunciation: "POH-deh es-kreh-VAIR" },
+        { en: "What does this mean?", native: "O que significa isso?", pronunciation: "oo keh seeg-nee-FEE-kah EE-soo" },
+        { en: "Is there someone who speaks English?", native: "Há alguém que fale inglês?", pronunciation: "ah al-GAYM keh FAH-leh een-GLAYS" },
+        { en: "I understand a little", native: "Entendo um pouco", pronunciation: "en-TEN-doo oom POH-koo" },
+        { en: "Can you help me?", native: "Pode me ajudar?", pronunciation: "POH-deh meh ah-zhoo-DAR" },
+        { en: "Where can I find…?", native: "Onde posso encontrar…?", pronunciation: "ON-deh POS-soo en-kon-TRAR" },
+        { en: "I have a reservation", native: "Tenho uma reserva", pronunciation: "TEN-yoo OO-mah heh-ZAIR-vah" },
+        { en: "Is Wi-Fi available?", native: "Tem Wi-Fi disponível?", pronunciation: "taym wee-FEE dees-poh-NEE-vel" },
+        { en: "Can I have the menu?", native: "O cardápio, por favor", pronunciation: "oo kar-DAH-pyoo por fah-VOR" },
+      ],
+    }
+  },
+  japanese: {
+    name: "Japanese",
+    categories: {
+      basic: [
+        { en: "Hello / Hi", native: "こんにちは / やあ", pronunciation: "Konnichiwa / Ya-a" },
+        { en: "Goodbye", native: "さようなら", pronunciation: "Sayōnara" },
+        { en: "Please", native: "お願いします", pronunciation: "Onegaishimasu" },
+        { en: "Thank you", native: "ありがとう", pronunciation: "Arigatō" },
+        { en: "Sorry / Excuse me", native: "すみません", pronunciation: "Sumimasen" },
+        { en: "Yes", native: "はい", pronunciation: "Hai" },
+        { en: "No", native: "いいえ", pronunciation: "Iie" },
+        { en: "I don't understand", native: "わかりません", pronunciation: "Wakarimasen" },
+        { en: "Do you speak English?", native: "英語を話せますか？", pronunciation: "Eigo o hanasemasu ka?" },
+        { en: "Help", native: "助けて", pronunciation: "Tasukete" },
+      ],
+      numbers: [
+        { en: "1", native: "一", pronunciation: "Ichi" },
+        { en: "2", native: "二", pronunciation: "Ni" },
+        { en: "3", native: "三", pronunciation: "San" },
+        { en: "4", native: "四", pronunciation: "Shi / Yon" },
+        { en: "5", native: "五", pronunciation: "Go" },
+        { en: "6", native: "六", pronunciation: "Roku" },
+        { en: "7", native: "七", pronunciation: "Shichi / Nana" },
+        { en: "8", native: "八", pronunciation: "Hachi" },
+        { en: "9", native: "九", pronunciation: "Kyū / Ku" },
+        { en: "10", native: "十", pronunciation: "Jū" },
+        { en: "11", native: "十一", pronunciation: "Jū-ichi" },
+        { en: "12", native: "十二", pronunciation: "Jū-ni" },
+        { en: "13", native: "十三", pronunciation: "Jū-san" },
+        { en: "14", native: "十四", pronunciation: "Jū-shi" },
+        { en: "15", native: "十五", pronunciation: "Jū-go" },
+        { en: "16", native: "十六", pronunciation: "Jū-roku" },
+        { en: "17", native: "十七", pronunciation: "Jū-shichi" },
+        { en: "18", native: "十八", pronunciation: "Jū-hachi" },
+        { en: "19", native: "十九", pronunciation: "Jū-ku" },
+        { en: "20", native: "二十", pronunciation: "Nijū" },
+        { en: "30", native: "三十", pronunciation: "Sanjū" },
+        { en: "40", native: "四十", pronunciation: "Yonjū" },
+        { en: "50", native: "五十", pronunciation: "Gojū" },
+        { en: "60", native: "六十", pronunciation: "Rokujū" },
+        { en: "70", native: "七十", pronunciation: "Nanajū" },
+        { en: "80", native: "八十", pronunciation: "Hachijū" },
+        { en: "90", native: "九十", pronunciation: "Kyūjū" },
+        { en: "100", native: "百", pronunciation: "Hyaku" },
+        { en: "200", native: "二百", pronunciation: "Nihyaku" },
+        { en: "300", native: "三百", pronunciation: "Sanhyaku" },
+        { en: "400", native: "四百", pronunciation: "Yonhyaku" },
+        { en: "500", native: "五百", pronunciation: "Gohyaku" },
+        { en: "600", native: "六百", pronunciation: "Roppyaku" },
+        { en: "700", native: "七百", pronunciation: "Nanahyaku" },
+        { en: "800", native: "八百", pronunciation: "Happyaku" },
+        { en: "900", native: "九百", pronunciation: "Kyūhyaku" },
+        { en: "1000", native: "千", pronunciation: "Sen" },
+      ],
+      people: [
+        { en: "I / Me", native: "私", pronunciation: "Watashi" },
+        { en: "You", native: "あなた", pronunciation: "Anata" },
+        { en: "He / She", native: "彼 / 彼女", pronunciation: "Kare / Kanojo" },
+        { en: "We", native: "私たち", pronunciation: "Watashitachi" },
+        { en: "Man / Woman", native: "男 / 女", pronunciation: "Otoko / Onna" },
+        { en: "Child", native: "子供", pronunciation: "Kodomo" },
+      ],
+      time: [
+        { en: "Today", native: "今日", pronunciation: "Kyō" },
+        { en: "Tomorrow", native: "明日", pronunciation: "Ashita" },
+        { en: "Yesterday", native: "昨日", pronunciation: "Kinō" },
+        { en: "Now", native: "今", pronunciation: "Ima" },
+        { en: "Morning / Afternoon / Evening", native: "朝 / 午後 / 夜", pronunciation: "Asa / Gogo / Yoru" },
+        { en: "What time is it?", native: "何時ですか？", pronunciation: "Nanji desu ka?" },
+      ],
+      directions: [
+        { en: "Where is…?", native: "…はどこですか？", pronunciation: "…wa doko desu ka?" },
+        { en: "Left / Right", native: "左 / 右", pronunciation: "Hidari / Migi" },
+        { en: "Straight ahead", native: "まっすぐ", pronunciation: "Massugu" },
+        { en: "Near / Far", native: "近く / 遠く", pronunciation: "Chikaku / Tōku" },
+        { en: "Here / There", native: "ここ / そこ", pronunciation: "Koko / Soko" },
+        { en: "Airport", native: "空港", pronunciation: "Kūkō" },
+        { en: "Train station", native: "駅", pronunciation: "Eki" },
+        { en: "Bus stop", native: "バス停", pronunciation: "Basu-tei" },
+        { en: "Hotel", native: "ホテル", pronunciation: "Hoteru" },
+        { en: "Hospital", native: "病院", pronunciation: "Byōin" },
+        { en: "Pharmacy", native: "薬局", pronunciation: "Yakkyoku" },
+        { en: "Police", native: "警察", pronunciation: "Keisatsu" },
+        { en: "Toilet / Bathroom", native: "トイレ", pronunciation: "Toire" },
+        { en: "Restaurant", native: "レストラン", pronunciation: "Resutoran" },
+        { en: "Market / Shop", native: "市場 / 店", pronunciation: "Ichiba / Mise" },
+      ],
+      food: [
+        { en: "Water", native: "水", pronunciation: "Mizu" },
+        { en: "Food / Eat", native: "食べ物 / 食べる", pronunciation: "Tabemono / Taberu" },
+        { en: "Bread", native: "パン", pronunciation: "Pan" },
+        { en: "Meat", native: "肉", pronunciation: "Niku" },
+        { en: "Vegetables", native: "野菜", pronunciation: "Yasai" },
+        { en: "Beer / Wine", native: "ビール / ワイン", pronunciation: "Bīru / Wain" },
+        { en: "Coffee / Tea", native: "コーヒー / お茶", pronunciation: "Kōhī / O-cha" },
+        { en: "I am vegetarian", native: "ベジタリアンです", pronunciation: "Bejitarian desu" },
+        { en: "The bill / Check please", native: "お会計をお願いします", pronunciation: "O-kaikei o onegaishimasu" },
+      ],
+      transport: [
+        { en: "Taxi", native: "タクシー", pronunciation: "Takushī" },
+        { en: "Bus", native: "バス", pronunciation: "Basu" },
+        { en: "Train", native: "電車", pronunciation: "Densha" },
+        { en: "Ticket", native: "チケット", pronunciation: "Chiketto" },
+        { en: "How much?", native: "いくらですか？", pronunciation: "Ikura desu ka?" },
+        { en: "How far?", native: "どのくらいですか？", pronunciation: "Dono kurai desu ka?" },
+      ],
+      emergencies: [
+        { en: "Help!", native: "助けて！", pronunciation: "Tasukete!" },
+        { en: "I am sick", native: "具合が悪い", pronunciation: "Guai ga warui" },
+        { en: "Doctor", native: "医者", pronunciation: "Isha" },
+        { en: "Police", native: "警察", pronunciation: "Keisatsu" },
+        { en: "Fire", native: "火事", pronunciation: "Kaji" },
+        { en: "I am lost", native: "迷子になりました", pronunciation: "Maigo ni narimashita" },
+        { en: "Call an ambulance", native: "救急車を呼んでください", pronunciation: "Kyūkyūsha o yonde kudasai" },
+      ],
+      essential: [
+        { en: "How much does this cost?", native: "これはいくらですか？", pronunciation: "Kore wa ikura desu ka?" },
+        { en: "Too expensive", native: "高すぎる", pronunciation: "Taka-sugiru" },
+        { en: "Where is the toilet?", native: "トイレはどこですか？", pronunciation: "Toire wa doko desu ka?" },
+        { en: "I need…", native: "…が必要です", pronunciation: "…ga hitsuyō desu" },
+        { en: "I want…", native: "…がほしいです", pronunciation: "…ga hoshii desu" },
+        { en: "I don't want…", native: "…はいりません", native: "…wa irimasen" },
+        { en: "I am allergic to…", native: "…アレルギーがあります", pronunciation: "…arerugī ga arimasu" },
+        { en: "My name is…", native: "私の名前は…です", pronunciation: "Watashi no namae wa…desu" },
+        { en: "I am from…", native: "…から来ました", pronunciation: "…kara kimashita" },
+      ],
+      phrases: [
+        { en: "Sorry, I don't speak Japanese", native: "すみません、日本語が話せません", pronunciation: "Sumimasen, nihongo ga hanasemasen" },
+        { en: "Can you repeat that?", native: "もう一度言ってもらえますか？", pronunciation: "Mō ichido itte moraemasu ka?" },
+        { en: "Can you speak more slowly?", native: "もっとゆっくり話してください", pronunciation: "Motto yukkuri hanashite kudasai" },
+        { en: "Can you write it down?", native: "書いてもらえますか？", pronunciation: "Kaite moraemasu ka?" },
+        { en: "What does this mean?", native: "これはどういう意味ですか？", pronunciation: "Kore wa dō iu imi desu ka?" },
+        { en: "Is there someone who speaks English?", native: "英語を話せる人はいますか？", pronunciation: "Eigo o hanaseru hito wa imasu ka?" },
+        { en: "I understand a little", native: "少しわかります", pronunciation: "Sukoshi wakarimasu" },
+        { en: "Can you help me?", native: "助けてもらえますか？", pronunciation: "Tasukete moraemasu ka?" },
+        { en: "Where can I find…?", native: "…はどこで見つかりますか？", pronunciation: "…wa doko de mitsukarimasuka?" },
+        { en: "I have a reservation", native: "予約があります", pronunciation: "Yoyaku ga arimasu" },
+        { en: "Is Wi-Fi available?", native: "Wi-Fiはありますか？", pronunciation: "Wai-fai wa arimasu ka?" },
+        { en: "Can I have the menu?", native: "メニューをください", pronunciation: "Menyū o kudasai" },
+      ],
+    }
+  },
+  mandarin: {
+    name: "Mandarin",
+    categories: {
+      basic: [
+        { en: "Hello / Hi", native: "你好 / 嗨", pronunciation: "Nǐ hǎo / Hāi" },
+        { en: "Goodbye", native: "再见", pronunciation: "Zàijiàn" },
+        { en: "Please", native: "请", pronunciation: "Qǐng" },
+        { en: "Thank you", native: "谢谢", pronunciation: "Xièxie" },
+        { en: "Sorry / Excuse me", native: "对不起 / 不好意思", pronunciation: "Duìbuqǐ / Bù hǎo yìsi" },
+        { en: "Yes", native: "是", pronunciation: "Shì" },
+        { en: "No", native: "不", pronunciation: "Bù" },
+        { en: "I don't understand", native: "我不明白", pronunciation: "Wǒ bù míngbái" },
+        { en: "Do you speak English?", native: "你会说英语吗？", pronunciation: "Nǐ huì shuō Yīngyǔ ma?" },
+        { en: "Help", native: "帮助", pronunciation: "Bāngzhù" },
+      ],
+      numbers: [
+        { en: "1", native: "一", pronunciation: "Yī" },
+        { en: "2", native: "二", pronunciation: "Èr" },
+        { en: "3", native: "三", pronunciation: "Sān" },
+        { en: "4", native: "四", pronunciation: "Sì" },
+        { en: "5", native: "五", pronunciation: "Wǔ" },
+        { en: "6", native: "六", pronunciation: "Liù" },
+        { en: "7", native: "七", pronunciation: "Qī" },
+        { en: "8", native: "八", pronunciation: "Bā" },
+        { en: "9", native: "九", pronunciation: "Jiǔ" },
+        { en: "10", native: "十", pronunciation: "Shí" },
+        { en: "11", native: "十一", pronunciation: "Shí-yī" },
+        { en: "12", native: "十二", pronunciation: "Shí-èr" },
+        { en: "13", native: "十三", pronunciation: "Shí-sān" },
+        { en: "14", native: "十四", pronunciation: "Shí-sì" },
+        { en: "15", native: "十五", pronunciation: "Shí-wǔ" },
+        { en: "16", native: "十六", pronunciation: "Shí-liù" },
+        { en: "17", native: "十七", pronunciation: "Shí-qī" },
+        { en: "18", native: "十八", pronunciation: "Shí-bā" },
+        { en: "19", native: "十九", pronunciation: "Shí-jiǔ" },
+        { en: "20", native: "二十", pronunciation: "Èrshí" },
+        { en: "30", native: "三十", pronunciation: "Sānshí" },
+        { en: "40", native: "四十", pronunciation: "Sìshí" },
+        { en: "50", native: "五十", pronunciation: "Wǔshí" },
+        { en: "60", native: "六十", pronunciation: "Liùshí" },
+        { en: "70", native: "七十", pronunciation: "Qīshí" },
+        { en: "80", native: "八十", pronunciation: "Bāshí" },
+        { en: "90", native: "九十", pronunciation: "Jiǔshí" },
+        { en: "100", native: "一百", pronunciation: "Yī bǎi" },
+        { en: "200", native: "二百", pronunciation: "Èr bǎi" },
+        { en: "300", native: "三百", pronunciation: "Sān bǎi" },
+        { en: "400", native: "四百", pronunciation: "Sì bǎi" },
+        { en: "500", native: "五百", pronunciation: "Wǔ bǎi" },
+        { en: "600", native: "六百", pronunciation: "Liù bǎi" },
+        { en: "700", native: "七百", pronunciation: "Qī bǎi" },
+        { en: "800", native: "八百", pronunciation: "Bā bǎi" },
+        { en: "900", native: "九百", pronunciation: "Jiǔ bǎi" },
+        { en: "1000", native: "一千", pronunciation: "Yī qiān" },
+      ],
+      people: [
+        { en: "I / Me", native: "我", pronunciation: "Wǒ" },
+        { en: "You", native: "你", pronunciation: "Nǐ" },
+        { en: "He / She", native: "他 / 她", pronunciation: "Tā / Tā" },
+        { en: "We", native: "我们", pronunciation: "Wǒmen" },
+        { en: "Man / Woman", native: "男人 / 女人", pronunciation: "Nánrén / Nǚrén" },
+        { en: "Child", native: "孩子", pronunciation: "Háizi" },
+      ],
+      time: [
+        { en: "Today", native: "今天", pronunciation: "Jīntiān" },
+        { en: "Tomorrow", native: "明天", pronunciation: "Míngtiān" },
+        { en: "Yesterday", native: "昨天", pronunciation: "Zuótiān" },
+        { en: "Now", native: "现在", pronunciation: "Xiànzài" },
+        { en: "Morning / Afternoon / Evening", native: "早上 / 下午 / 晚上", pronunciation: "Zǎoshang / Xiàwǔ / Wǎnshang" },
+        { en: "What time is it?", native: "现在几点？", pronunciation: "Xiànzài jǐ diǎn?" },
+      ],
+      directions: [
+        { en: "Where is…?", native: "…在哪里？", pronunciation: "…zài nǎlǐ?" },
+        { en: "Left / Right", native: "左 / 右", pronunciation: "Zuǒ / Yòu" },
+        { en: "Straight ahead", native: "直走", pronunciation: "Zhí zǒu" },
+        { en: "Near / Far", native: "近 / 远", pronunciation: "Jìn / Yuǎn" },
+        { en: "Here / There", native: "这里 / 那里", pronunciation: "Zhèlǐ / Nàlǐ" },
+        { en: "Airport", native: "机场", pronunciation: "Jīchǎng" },
+        { en: "Train station", native: "火车站", pronunciation: "Huǒchē zhàn" },
+        { en: "Bus stop", native: "公交站", pronunciation: "Gōngjiāo zhàn" },
+        { en: "Hotel", native: "酒店", pronunciation: "Jiǔdiàn" },
+        { en: "Hospital", native: "医院", pronunciation: "Yīyuàn" },
+        { en: "Pharmacy", native: "药店", pronunciation: "Yàodiàn" },
+        { en: "Police", native: "警察", pronunciation: "Jǐngchá" },
+        { en: "Toilet / Bathroom", native: "厕所 / 卫生间", pronunciation: "Cèsuǒ / Wèishēngjiān" },
+        { en: "Restaurant", native: "餐厅", pronunciation: "Cāntīng" },
+        { en: "Market / Shop", native: "市场 / 商店", pronunciation: "Shìchǎng / Shāngdiàn" },
+      ],
+      food: [
+        { en: "Water", native: "水", pronunciation: "Shuǐ" },
+        { en: "Food / Eat", native: "食物 / 吃", pronunciation: "Shíwù / Chī" },
+        { en: "Bread", native: "面包", pronunciation: "Miànbāo" },
+        { en: "Meat", native: "肉", pronunciation: "Ròu" },
+        { en: "Vegetables", native: "蔬菜", pronunciation: "Shūcài" },
+        { en: "Beer / Wine", native: "啤酒 / 葡萄酒", pronunciation: "Píjiǔ / Pútáojiǔ" },
+        { en: "Coffee / Tea", native: "咖啡 / 茶", pronunciation: "Kāfēi / Chá" },
+        { en: "I am vegetarian", native: "我是素食者", pronunciation: "Wǒ shì sùshí zhě" },
+        { en: "The bill / Check please", native: "请买单", pronunciation: "Qǐng mǎidān" },
+      ],
+      transport: [
+        { en: "Taxi", native: "出租车", pronunciation: "Chūzū chē" },
+        { en: "Bus", native: "公共汽车", pronunciation: "Gōnggòng qìchē" },
+        { en: "Train", native: "火车", pronunciation: "Huǒchē" },
+        { en: "Ticket", native: "票", pronunciation: "Piào" },
+        { en: "How much?", native: "多少钱？", pronunciation: "Duōshǎo qián?" },
+        { en: "How far?", native: "多远？", pronunciation: "Duō yuǎn?" },
+      ],
+      emergencies: [
+        { en: "Help!", native: "救命！", pronunciation: "Jiùmìng!" },
+        { en: "I am sick", native: "我病了", pronunciation: "Wǒ bìng le" },
+        { en: "Doctor", native: "医生", pronunciation: "Yīshēng" },
+        { en: "Police", native: "警察", pronunciation: "Jǐngchá" },
+        { en: "Fire", native: "火灾", pronunciation: "Huǒzāi" },
+        { en: "I am lost", native: "我迷路了", pronunciation: "Wǒ mílù le" },
+        { en: "Call an ambulance", native: "请叫救护车", pronunciation: "Qǐng jiào jiùhù chē" },
+      ],
+      essential: [
+        { en: "How much does this cost?", native: "这个多少钱？", pronunciation: "Zhège duōshǎo qián?" },
+        { en: "Too expensive", native: "太贵了", pronunciation: "Tài guì le" },
+        { en: "Where is the toilet?", native: "厕所在哪里？", pronunciation: "Cèsuǒ zài nǎlǐ?" },
+        { en: "I need…", native: "我需要…", pronunciation: "Wǒ xūyào…" },
+        { en: "I want…", native: "我想要…", pronunciation: "Wǒ xiǎng yào…" },
+        { en: "I don't want…", native: "我不想要…", pronunciation: "Wǒ bù xiǎng yào…" },
+        { en: "I am allergic to…", native: "我对…过敏", pronunciation: "Wǒ duì…guòmǐn" },
+        { en: "My name is…", native: "我叫…", pronunciation: "Wǒ jiào…" },
+        { en: "I am from…", native: "我来自…", pronunciation: "Wǒ lái zì…" },
+      ],
+      phrases: [
+        { en: "Sorry, I don't speak Mandarin", native: "对不起，我不会说普通话", pronunciation: "Duìbuqǐ, wǒ bù huì shuō pǔtōnghuà" },
+        { en: "Can you repeat that?", native: "你能再说一遍吗？", pronunciation: "Nǐ néng zài shuō yī biàn ma?" },
+        { en: "Can you speak more slowly?", native: "你能说慢一点吗？", pronunciation: "Nǐ néng shuō màn yīdiǎn ma?" },
+        { en: "Can you write it down?", native: "你能写下来吗？", pronunciation: "Nǐ néng xiě xialai ma?" },
+        { en: "What does this mean?", native: "这是什么意思？", pronunciation: "Zhè shì shénme yìsi?" },
+        { en: "Is there someone who speaks English?", native: "有人会说英语吗？", pronunciation: "Yǒu rén huì shuō Yīngyǔ ma?" },
+        { en: "I understand a little", native: "我懂一点", pronunciation: "Wǒ dǒng yīdiǎn" },
+        { en: "Can you help me?", native: "你能帮我吗？", pronunciation: "Nǐ néng bāng wǒ ma?" },
+        { en: "Where can I find…?", native: "我在哪里可以找到…？", pronunciation: "Wǒ zài nǎlǐ kěyǐ zhǎodào…?" },
+        { en: "I have a reservation", native: "我有预订", pronunciation: "Wǒ yǒu yùdìng" },
+        { en: "Is Wi-Fi available?", native: "有Wi-Fi吗？", pronunciation: "Yǒu wài-fài ma?" },
+        { en: "Can I have the menu?", native: "请给我菜单", pronunciation: "Qǐng gěi wǒ càidān" },
+      ],
+    }
+  },
+  arabic: {
+    name: "Arabic",
+    categories: {
+      basic: [
+        { en: "Hello / Hi", native: "مرحبا / أهلاً", pronunciation: "Marhaba / Ahlan" },
+        { en: "Goodbye", native: "مع السلامة", pronunciation: "Ma'a salama" },
+        { en: "Please", native: "من فضلك", pronunciation: "Min fadlak" },
+        { en: "Thank you", native: "شكراً", pronunciation: "Shukran" },
+        { en: "Sorry / Excuse me", native: "آسف / عفواً", pronunciation: "Aasif / Afwan" },
+        { en: "Yes", native: "نعم", pronunciation: "Na'am" },
+        { en: "No", native: "لا", pronunciation: "La" },
+        { en: "I don't understand", native: "لا أفهم", pronunciation: "La afham" },
+        { en: "Do you speak English?", native: "هل تتكلم الإنجليزية؟", pronunciation: "Hal tatakallam al-Injlīzīya?" },
+        { en: "Help", native: "مساعدة", pronunciation: "Musa'ada" },
+      ],
+      numbers: [
+        { en: "1", native: "واحد", pronunciation: "Wahid" },
+        { en: "2", native: "اثنان", pronunciation: "Ithnan" },
+        { en: "3", native: "ثلاثة", pronunciation: "Thalatha" },
+        { en: "4", native: "أربعة", pronunciation: "Arba'a" },
+        { en: "5", native: "خمسة", pronunciation: "Khamsa" },
+        { en: "6", native: "ستة", pronunciation: "Sitta" },
+        { en: "7", native: "سبعة", pronunciation: "Sab'a" },
+        { en: "8", native: "ثمانية", pronunciation: "Thamaniya" },
+        { en: "9", native: "تسعة", pronunciation: "Tis'a" },
+        { en: "10", native: "عشرة", pronunciation: "Ashara" },
+        { en: "11", native: "أحد عشر", pronunciation: "Ahad ashar" },
+        { en: "12", native: "اثنا عشر", pronunciation: "Ithna ashar" },
+        { en: "13", native: "ثلاثة عشر", pronunciation: "Thalatha ashar" },
+        { en: "14", native: "أربعة عشر", pronunciation: "Arba'a ashar" },
+        { en: "15", native: "خمسة عشر", pronunciation: "Khamsa ashar" },
+        { en: "16", native: "ستة عشر", pronunciation: "Sitta ashar" },
+        { en: "17", native: "سبعة عشر", pronunciation: "Sab'a ashar" },
+        { en: "18", native: "ثمانية عشر", pronunciation: "Thamaniya ashar" },
+        { en: "19", native: "تسعة عشر", pronunciation: "Tis'a ashar" },
+        { en: "20", native: "عشرون", pronunciation: "Ishrun" },
+        { en: "30", native: "ثلاثون", pronunciation: "Thalathun" },
+        { en: "40", native: "أربعون", pronunciation: "Arba'un" },
+        { en: "50", native: "خمسون", pronunciation: "Khamsun" },
+        { en: "60", native: "ستون", pronunciation: "Sittun" },
+        { en: "70", native: "سبعون", pronunciation: "Sab'un" },
+        { en: "80", native: "ثمانون", pronunciation: "Thamanun" },
+        { en: "90", native: "تسعون", pronunciation: "Tis'un" },
+        { en: "100", native: "مئة", pronunciation: "Mi'a" },
+        { en: "200", native: "مئتان", pronunciation: "Mi'atan" },
+        { en: "300", native: "ثلاثمئة", pronunciation: "Thalathami'a" },
+        { en: "400", native: "أربعمئة", pronunciation: "Arba'ami'a" },
+        { en: "500", native: "خمسمئة", pronunciation: "Khamsami'a" },
+        { en: "600", native: "ستمئة", pronunciation: "Sittami'a" },
+        { en: "700", native: "سبعمئة", pronunciation: "Sab'ami'a" },
+        { en: "800", native: "ثمانمئة", pronunciation: "Thamanami'a" },
+        { en: "900", native: "تسعمئة", pronunciation: "Tis'ami'a" },
+        { en: "1000", native: "ألف", pronunciation: "Alf" },
+      ],
+      people: [
+        { en: "I / Me", native: "أنا / لي", pronunciation: "Ana / Li" },
+        { en: "You", native: "أنت", pronunciation: "Anta (m) / Anti (f)" },
+        { en: "He / She", native: "هو / هي", pronunciation: "Huwa / Hiya" },
+        { en: "We", native: "نحن", pronunciation: "Nahnu" },
+        { en: "Man / Woman", native: "رجل / امرأة", pronunciation: "Rajul / Imra'a" },
+        { en: "Child", native: "طفل", pronunciation: "Tifl" },
+      ],
+      time: [
+        { en: "Today", native: "اليوم", pronunciation: "Al-yawm" },
+        { en: "Tomorrow", native: "غداً", pronunciation: "Ghadan" },
+        { en: "Yesterday", native: "أمس", pronunciation: "Ams" },
+        { en: "Now", native: "الآن", pronunciation: "Al-an" },
+        { en: "Morning / Afternoon / Evening", native: "صباح / ظهر / مساء", pronunciation: "Sabah / Zuhr / Masa'" },
+        { en: "What time is it?", native: "كم الساعة؟", pronunciation: "Kam al-sa'a?" },
+      ],
+      directions: [
+        { en: "Where is…?", native: "أين…؟", pronunciation: "Ayna…?" },
+        { en: "Left / Right", native: "يسار / يمين", pronunciation: "Yasar / Yamin" },
+        { en: "Straight ahead", native: "مستقيم", pronunciation: "Mustaqim" },
+        { en: "Near / Far", native: "قريب / بعيد", pronunciation: "Qarib / Ba'id" },
+        { en: "Here / There", native: "هنا / هناك", pronunciation: "Huna / Hunak" },
+        { en: "Airport", native: "مطار", pronunciation: "Matar" },
+        { en: "Train station", native: "محطة قطار", pronunciation: "Mahattat qitar" },
+        { en: "Bus stop", native: "موقف حافلة", pronunciation: "Mawqif hafila" },
+        { en: "Hotel", native: "فندق", pronunciation: "Funduq" },
+        { en: "Hospital", native: "مستشفى", pronunciation: "Mustashfa" },
+        { en: "Pharmacy", native: "صيدلية", pronunciation: "Saydaliya" },
+        { en: "Police", native: "شرطة", pronunciation: "Shurta" },
+        { en: "Toilet / Bathroom", native: "حمام / دورة مياه", pronunciation: "Hammam / Dawrat miyah" },
+        { en: "Restaurant", native: "مطعم", pronunciation: "Mat'am" },
+        { en: "Market / Shop", native: "سوق / متجر", pronunciation: "Suq / Matjar" },
+      ],
+      food: [
+        { en: "Water", native: "ماء", pronunciation: "Ma'" },
+        { en: "Food / Eat", native: "طعام / أكل", pronunciation: "Ta'am / Akl" },
+        { en: "Bread", native: "خبز", pronunciation: "Khubz" },
+        { en: "Meat", native: "لحم", pronunciation: "Lahm" },
+        { en: "Vegetables", native: "خضروات", pronunciation: "Khudrawat" },
+        { en: "Beer / Wine", native: "بيرة / نبيذ", pronunciation: "Bira / Nabidh" },
+        { en: "Coffee / Tea", native: "قهوة / شاي", pronunciation: "Qahwa / Shay" },
+        { en: "I am vegetarian", native: "أنا نباتي", pronunciation: "Ana nabati" },
+        { en: "The bill / Check please", native: "الحساب من فضلك", pronunciation: "Al-hisab min fadlak" },
+      ],
+      transport: [
+        { en: "Taxi", native: "تاكسي", pronunciation: "Taksi" },
+        { en: "Bus", native: "حافلة", pronunciation: "Hafila" },
+        { en: "Train", native: "قطار", pronunciation: "Qitar" },
+        { en: "Ticket", native: "تذكرة", pronunciation: "Tadhkira" },
+        { en: "How much?", native: "بكم؟", pronunciation: "Bikam?" },
+        { en: "How far?", native: "كم المسافة؟", pronunciation: "Kam al-masafa?" },
+      ],
+      emergencies: [
+        { en: "Help!", native: "النجدة!", pronunciation: "An-najda!" },
+        { en: "I am sick", native: "أنا مريض", pronunciation: "Ana marid" },
+        { en: "Doctor", native: "طبيب", pronunciation: "Tabib" },
+        { en: "Police", native: "شرطة", pronunciation: "Shurta" },
+        { en: "Fire", native: "حريق", pronunciation: "Hariq" },
+        { en: "I am lost", native: "أنا ضائع", pronunciation: "Ana da'i'" },
+        { en: "Call an ambulance", native: "اتصل بالإسعاف", pronunciation: "Ittasil bil-is'af" },
+      ],
+      essential: [
+        { en: "How much does this cost?", native: "كم ثمن هذا؟", pronunciation: "Kam thaman hadha?" },
+        { en: "Too expensive", native: "غالي جداً", pronunciation: "Ghali jiddan" },
+        { en: "Where is the toilet?", native: "أين الحمام؟", pronunciation: "Ayna al-hammam?" },
+        { en: "I need…", native: "أحتاج إلى…", pronunciation: "Ahtaj ila…" },
+        { en: "I want…", native: "أريد…", pronunciation: "Urid…" },
+        { en: "I don't want…", native: "لا أريد…", pronunciation: "La urid…" },
+        { en: "I am allergic to…", native: "لدي حساسية من…", pronunciation: "Ladayya hassasiya min…" },
+        { en: "My name is…", native: "اسمي…", pronunciation: "Ismi…" },
+        { en: "I am from…", native: "أنا من…", pronunciation: "Ana min…" },
+      ],
+      phrases: [
+        { en: "Sorry, I don't speak Arabic", native: "آسف، لا أتكلم العربية", pronunciation: "Aasif, la atakallam al-Arabiya" },
+        { en: "Can you repeat that?", native: "هل يمكنك تكرار ذلك؟", pronunciation: "Hal yumkinuka tikrar dhalik?" },
+        { en: "Can you speak more slowly?", native: "هل يمكنك التحدث ببطء أكثر؟", pronunciation: "Hal yumkinuka al-tahaduth bibut' akthar?" },
+        { en: "Can you write it down?", native: "هل يمكنك كتابته؟", pronunciation: "Hal yumkinuka kitabatuh?" },
+        { en: "What does this mean?", native: "ماذا يعني هذا؟", pronunciation: "Madha ya'ni hadha?" },
+        { en: "Is there someone who speaks English?", native: "هل يوجد أحد يتكلم الإنجليزية؟", pronunciation: "Hal yujad ahad yatakallam al-Injliziya?" },
+        { en: "I understand a little", native: "أفهم قليلاً", pronunciation: "Afham qalilan" },
+        { en: "Can you help me?", native: "هل يمكنك مساعدتي؟", pronunciation: "Hal yumkinuka musa'adati?" },
+        { en: "Where can I find…?", native: "أين يمكنني إيجاد…؟", pronunciation: "Ayna yumkinuni ijad…?" },
+        { en: "I have a reservation", native: "لدي حجز", pronunciation: "Ladayya hajz" },
+        { en: "Is Wi-Fi available?", native: "هل يوجد واي فاي؟", pronunciation: "Hal yujad wai-fai?" },
+        { en: "Can I have the menu?", native: "أعطني القائمة من فضلك", pronunciation: "A'tini al-qa'ima min fadlak" },
+      ],
+    }
+  },
+  greek: {
+    name: "Greek",
+    categories: {
+      basic: [
+        { en: "Hello / Hi", native: "Γεια σας / Γεια", pronunciation: "Yia sas / Yia" },
+        { en: "Goodbye", native: "Αντίο", pronunciation: "Adio" },
+        { en: "Please", native: "Παρακαλώ", pronunciation: "Parakalo" },
+        { en: "Thank you", native: "Ευχαριστώ", pronunciation: "Efharisto" },
+        { en: "Sorry / Excuse me", native: "Συγγνώμη / Με συγχωρείτε", pronunciation: "Signomi / Me sinhorite" },
+        { en: "Yes", native: "Ναι", pronunciation: "Ne" },
+        { en: "No", native: "Όχι", pronunciation: "Ohi" },
+        { en: "I don't understand", native: "Δεν καταλαβαίνω", pronunciation: "Den katalaveno" },
+        { en: "Do you speak English?", native: "Μιλάτε αγγλικά;", pronunciation: "Milate anglika?" },
+        { en: "Help", native: "Βοήθεια", pronunciation: "Voithia" },
+      ],
+      numbers: [
+        { en: "1", native: "Ένα", pronunciation: "Ena" },
+        { en: "2", native: "Δύο", pronunciation: "Dio" },
+        { en: "3", native: "Τρία", pronunciation: "Tria" },
+        { en: "4", native: "Τέσσερα", pronunciation: "Tessera" },
+        { en: "5", native: "Πέντε", pronunciation: "Pende" },
+        { en: "6", native: "Έξι", pronunciation: "Exi" },
+        { en: "7", native: "Επτά", pronunciation: "Epta" },
+        { en: "8", native: "Οκτώ", pronunciation: "Okto" },
+        { en: "9", native: "Εννέα", pronunciation: "Enea" },
+        { en: "10", native: "Δέκα", pronunciation: "Deka" },
+        { en: "11", native: "Έντεκα", pronunciation: "Endeka" },
+        { en: "12", native: "Δώδεκα", pronunciation: "Dodeka" },
+        { en: "13", native: "Δεκατρία", pronunciation: "Dekatria" },
+        { en: "14", native: "Δεκατέσσερα", pronunciation: "Dekatessera" },
+        { en: "15", native: "Δεκαπέντε", pronunciation: "Dekapende" },
+        { en: "16", native: "Δεκαέξι", pronunciation: "Dekaexi" },
+        { en: "17", native: "Δεκαεπτά", pronunciation: "Dekaepta" },
+        { en: "18", native: "Δεκαοκτώ", pronunciation: "Dekaokto" },
+        { en: "19", native: "Δεκαεννέα", pronunciation: "Dekaenea" },
+        { en: "20", native: "Είκοσι", pronunciation: "Ikosi" },
+        { en: "30", native: "Τριάντα", pronunciation: "Trianda" },
+        { en: "40", native: "Σαράντα", pronunciation: "Saranda" },
+        { en: "50", native: "Πενήντα", pronunciation: "Peninda" },
+        { en: "60", native: "Εξήντα", pronunciation: "Exinda" },
+        { en: "70", native: "Εβδομήντα", pronunciation: "Evdominda" },
+        { en: "80", native: "Ογδόντα", pronunciation: "Ogdonda" },
+        { en: "90", native: "Ενενήντα", pronunciation: "Eneninda" },
+        { en: "100", native: "Εκατό", pronunciation: "Ekato" },
+        { en: "200", native: "Διακόσια", pronunciation: "Diakosia" },
+        { en: "300", native: "Τριακόσια", pronunciation: "Triakosia" },
+        { en: "400", native: "Τετρακόσια", pronunciation: "Tetrakosia" },
+        { en: "500", native: "Πεντακόσια", pronunciation: "Pendakosia" },
+        { en: "600", native: "Εξακόσια", pronunciation: "Exakosia" },
+        { en: "700", native: "Επτακόσια", pronunciation: "Eptakosia" },
+        { en: "800", native: "Οκτακόσια", pronunciation: "Oktakosia" },
+        { en: "900", native: "Εννιακόσια", pronunciation: "Eniakosia" },
+        { en: "1000", native: "Χίλια", pronunciation: "Hilia" },
+      ],
+      people: [
+        { en: "I / Me", native: "Εγώ / Εμένα", pronunciation: "Ego / Emena" },
+        { en: "You", native: "Εσύ / Εσάς", pronunciation: "Esi / Esas" },
+        { en: "He / She", native: "Αυτός / Αυτή", pronunciation: "Aftos / Afti" },
+        { en: "We", native: "Εμείς", pronunciation: "Emis" },
+        { en: "Man / Woman", native: "Άντρας / Γυναίκα", pronunciation: "Andras / Yineka" },
+        { en: "Child", native: "Παιδί", pronunciation: "Pedi" },
+      ],
+      time: [
+        { en: "Today", native: "Σήμερα", pronunciation: "Simera" },
+        { en: "Tomorrow", native: "Αύριο", pronunciation: "Avrio" },
+        { en: "Yesterday", native: "Χθες", pronunciation: "Hthes" },
+        { en: "Now", native: "Τώρα", pronunciation: "Tora" },
+        { en: "Morning / Afternoon / Evening", native: "Πρωί / Απόγευμα / Βράδυ", pronunciation: "Proi / Apoyevma / Vradi" },
+        { en: "What time is it?", native: "Τι ώρα είναι;", pronunciation: "Ti ora ine?" },
+      ],
+      directions: [
+        { en: "Where is…?", native: "Πού είναι…;", pronunciation: "Pu ine?" },
+        { en: "Left / Right", native: "Αριστερά / Δεξιά", pronunciation: "Aristera / Dexia" },
+        { en: "Straight ahead", native: "Ευθεία", pronunciation: "Efthia" },
+        { en: "Near / Far", native: "Κοντά / Μακριά", pronunciation: "Koda / Makria" },
+        { en: "Here / There", native: "Εδώ / Εκεί", pronunciation: "Edo / Eki" },
+        { en: "Airport", native: "Αεροδρόμιο", pronunciation: "Aerodromio" },
+        { en: "Train station", native: "Σιδηροδρομικός σταθμός", pronunciation: "Sidirodromikos stathmos" },
+        { en: "Bus stop", native: "Στάση λεωφορείου", pronunciation: "Stasi leoforeiou" },
+        { en: "Hotel", native: "Ξενοδοχείο", pronunciation: "Xenodohio" },
+        { en: "Hospital", native: "Νοσοκομείο", pronunciation: "Nosokomio" },
+        { en: "Pharmacy", native: "Φαρμακείο", pronunciation: "Farmakio" },
+        { en: "Police", native: "Αστυνομία", pronunciation: "Astinomia" },
+        { en: "Toilet / Bathroom", native: "Τουαλέτα / Μπάνιο", pronunciation: "Toaleta / Banio" },
+        { en: "Restaurant", native: "Εστιατόριο", pronunciation: "Estiatório" },
+        { en: "Market / Shop", native: "Αγορά / Μαγαζί", pronunciation: "Agora / Magazi" },
+      ],
+      food: [
+        { en: "Water", native: "Νερό", pronunciation: "Nero" },
+        { en: "Food / Eat", native: "Φαγητό / Τρώω", pronunciation: "Fayito / Troo" },
+        { en: "Bread", native: "Ψωμί", pronunciation: "Psomi" },
+        { en: "Meat", native: "Κρέας", pronunciation: "Kreas" },
+        { en: "Vegetables", native: "Λαχανικά", pronunciation: "Lahanika" },
+        { en: "Beer / Wine", native: "Μπύρα / Κρασί", pronunciation: "Bira / Krasi" },
+        { en: "Coffee / Tea", native: "Καφές / Τσάι", pronunciation: "Kafes / Tsai" },
+        { en: "I am vegetarian", native: "Είμαι χορτοφάγος", pronunciation: "Ime hortofagos" },
+        { en: "The bill / Check please", native: "Τον λογαριασμό παρακαλώ", pronunciation: "Ton logariasmo parakalo" },
+      ],
+      transport: [
+        { en: "Taxi", native: "Ταξί", pronunciation: "Taxi" },
+        { en: "Bus", native: "Λεωφορείο", pronunciation: "Leoforeio" },
+        { en: "Train", native: "Τρένο", pronunciation: "Treno" },
+        { en: "Ticket", native: "Εισιτήριο", pronunciation: "Isitirio" },
+        { en: "How much?", native: "Πόσο κοστίζει;", pronunciation: "Poso kostizi?" },
+        { en: "How far?", native: "Πόσο μακριά;", pronunciation: "Poso makria?" },
+      ],
+      emergencies: [
+        { en: "Help!", native: "Βοήθεια!", pronunciation: "Voithia!" },
+        { en: "I am sick", native: "Είμαι άρρωστος", pronunciation: "Ime arostos" },
+        { en: "Doctor", native: "Γιατρός", pronunciation: "Yatros" },
+        { en: "Police", native: "Αστυνομία", pronunciation: "Astinomia" },
+        { en: "Fire", native: "Φωτιά", pronunciation: "Fotia" },
+        { en: "I am lost", native: "Έχω χαθεί", pronunciation: "Eho hathi" },
+        { en: "Call an ambulance", native: "Καλέστε ασθενοφόρο", pronunciation: "Kaleste asthenoforo" },
+      ],
+      essential: [
+        { en: "How much does this cost?", native: "Πόσο κοστίζει αυτό;", pronunciation: "Poso kostizi afto?" },
+        { en: "Too expensive", native: "Πολύ ακριβό", pronunciation: "Poli akrivo" },
+        { en: "Where is the toilet?", native: "Πού είναι η τουαλέτα;", pronunciation: "Pu ine i toaleta?" },
+        { en: "I need…", native: "Χρειάζομαι…", pronunciation: "Hriazomai…" },
+        { en: "I want…", native: "Θέλω…", pronunciation: "Thelo…" },
+        { en: "I don't want…", native: "Δεν θέλω…", pronunciation: "Den thelo…" },
+        { en: "I am allergic to…", native: "Είμαι αλλεργικός σε…", pronunciation: "Ime alergikos se…" },
+        { en: "My name is…", native: "Με λένε…", pronunciation: "Me lene…" },
+        { en: "I am from…", native: "Είμαι από…", pronunciation: "Ime apo…" },
+      ],
+      phrases: [
+        { en: "Sorry, I don't speak Greek", native: "Συγγνώμη, δεν μιλάω ελληνικά", pronunciation: "Signomi, den milao Elinika" },
+        { en: "Can you repeat that?", native: "Μπορείτε να το επαναλάβετε;", pronunciation: "Borite na to epanalavete?" },
+        { en: "Can you speak more slowly?", native: "Μπορείτε να μιλάτε πιο αργά;", pronunciation: "Borite na milate pio arga?" },
+        { en: "Can you write it down?", native: "Μπορείτε να το γράψετε;", pronunciation: "Borite na to grapsete?" },
+        { en: "What does this mean?", native: "Τι σημαίνει αυτό;", pronunciation: "Ti simeni afto?" },
+        { en: "Is there someone who speaks English?", native: "Υπάρχει κάποιος που μιλά αγγλικά;", pronunciation: "Iparhi kapios pou mila anglika?" },
+        { en: "I understand a little", native: "Καταλαβαίνω λίγο", pronunciation: "Katalaveno ligo" },
+        { en: "Can you help me?", native: "Μπορείτε να με βοηθήσετε;", pronunciation: "Borite na me voithisete?" },
+        { en: "Where can I find…?", native: "Πού μπορώ να βρω…;", pronunciation: "Pu boro na vro…?" },
+        { en: "I have a reservation", native: "Έχω κράτηση", pronunciation: "Eho kratisi" },
+        { en: "Is Wi-Fi available?", native: "Υπάρχει Wi-Fi;", pronunciation: "Iparhi wai-fai?" },
+        { en: "Can I have the menu?", native: "Τον κατάλογο παρακαλώ", pronunciation: "Ton katalogo parakalo" },
+      ],
+    }
+  },
+  polish: {
+    name: "Polish",
+    categories: {
+      basic: [
+        { en: "Hello / Hi", native: "Cześć / Hej", pronunciation: "Cheshch / Hay" },
+        { en: "Goodbye", native: "Do widzenia", pronunciation: "Doh vid-ZEN-yah" },
+        { en: "Please", native: "Proszę", pronunciation: "PROH-sheh" },
+        { en: "Thank you", native: "Dziękuję", pronunciation: "Jen-KOO-yeh" },
+        { en: "Sorry / Excuse me", native: "Przepraszam", pronunciation: "Psheh-PRAH-shahm" },
+        { en: "Yes", native: "Tak", pronunciation: "tak" },
+        { en: "No", native: "Nie", pronunciation: "nyeh" },
+        { en: "I don't understand", native: "Nie rozumiem", pronunciation: "Nyeh roh-ZOO-myem" },
+        { en: "Do you speak English?", native: "Czy mówi Pan/Pani po angielsku?", pronunciation: "Chih MOO-vee pan/PAH-nee poh an-GYEL-skoo" },
+        { en: "Help", native: "Pomoc", pronunciation: "POH-mots" },
+      ],
+      numbers: [
+        { en: "1", native: "Jeden", pronunciation: "YEH-den" },
+        { en: "2", native: "Dwa", pronunciation: "dvah" },
+        { en: "3", native: "Trzy", pronunciation: "tshih" },
+        { en: "4", native: "Cztery", pronunciation: "CHTE-rih" },
+        { en: "5", native: "Pięć", pronunciation: "pyench" },
+        { en: "6", native: "Sześć", pronunciation: "sheshch" },
+        { en: "7", native: "Siedem", pronunciation: "SHEH-dem" },
+        { en: "8", native: "Osiem", pronunciation: "OH-shem" },
+        { en: "9", native: "Dziewięć", pronunciation: "Jeh-VYENCH" },
+        { en: "10", native: "Dziesięć", pronunciation: "JEH-shench" },
+        { en: "11", native: "Jedenaście", pronunciation: "yeh-deh-NASH-cheh" },
+        { en: "12", native: "Dwanaście", pronunciation: "dvah-NASH-cheh" },
+        { en: "13", native: "Trzynaście", pronunciation: "tshih-NASH-cheh" },
+        { en: "14", native: "Czternaście", pronunciation: "chter-NASH-cheh" },
+        { en: "15", native: "Piętnaście", pronunciation: "pyent-NASH-cheh" },
+        { en: "16", native: "Szesnaście", pronunciation: "shes-NASH-cheh" },
+        { en: "17", native: "Siedemnaście", pronunciation: "sheh-dem-NASH-cheh" },
+        { en: "18", native: "Osiemnaście", pronunciation: "oh-shem-NASH-cheh" },
+        { en: "19", native: "Dziewiętnaście", pronunciation: "jeh-vyent-NASH-cheh" },
+        { en: "20", native: "Dwadzieścia", pronunciation: "dvah-JESH-chah" },
+        { en: "30", native: "Trzydzieści", pronunciation: "tshih-JESH-chee" },
+        { en: "40", native: "Czterdzieści", pronunciation: "chter-JESH-chee" },
+        { en: "50", native: "Pięćdziesiąt", pronunciation: "pyench-JEH-shont" },
+        { en: "60", native: "Sześćdziesiąt", pronunciation: "sheshch-JEH-shont" },
+        { en: "70", native: "Siedemdziesiąt", pronunciation: "sheh-dem-JEH-shont" },
+        { en: "80", native: "Osiemdziesiąt", pronunciation: "oh-shem-JEH-shont" },
+        { en: "90", native: "Dziewięćdziesiąt", pronunciation: "jeh-vyench-JEH-shont" },
+        { en: "100", native: "Sto", pronunciation: "stoh" },
+        { en: "200", native: "Dwieście", pronunciation: "DVYESH-cheh" },
+        { en: "300", native: "Trzysta", pronunciation: "TSHIH-stah" },
+        { en: "400", native: "Czterysta", pronunciation: "CHTE-rih-stah" },
+        { en: "500", native: "Pięćset", pronunciation: "PYENCH-set" },
+        { en: "600", native: "Sześćset", pronunciation: "SHESHCH-set" },
+        { en: "700", native: "Siedemset", pronunciation: "SHEH-dem-set" },
+        { en: "800", native: "Osiemset", pronunciation: "OH-shem-set" },
+        { en: "900", native: "Dziewięćset", pronunciation: "jeh-VYENCH-set" },
+        { en: "1000", native: "Tysiąc", pronunciation: "TIH-shonts" },
+      ],
+      people: [
+        { en: "I / Me", native: "Ja / Mnie", pronunciation: "yah / mnyeh" },
+        { en: "You", native: "Ty / Pan/Pani", pronunciation: "tih / pan/PAH-nee" },
+        { en: "He / She", native: "On / Ona", pronunciation: "on / OH-nah" },
+        { en: "We", native: "My", pronunciation: "mih" },
+        { en: "Man / Woman", native: "Mężczyzna / Kobieta", pronunciation: "Mezh-CHIZ-nah / Koh-BYEH-tah" },
+        { en: "Child", native: "Dziecko", pronunciation: "JYETS-koh" },
+      ],
+      time: [
+        { en: "Today", native: "Dzisiaj", pronunciation: "JEE-shay" },
+        { en: "Tomorrow", native: "Jutro", pronunciation: "YOO-troh" },
+        { en: "Yesterday", native: "Wczoraj", pronunciation: "VTCHO-ray" },
+        { en: "Now", native: "Teraz", pronunciation: "TEH-rahs" },
+        { en: "Morning / Afternoon / Evening", native: "Rano / Popołudnie / Wieczór", pronunciation: "RAH-noh / poh-poh-LOOD-nyeh / VYEH-choor" },
+        { en: "What time is it?", native: "Która godzina?", pronunciation: "KTOO-rah goh-JEE-nah" },
+      ],
+      directions: [
+        { en: "Where is…?", native: "Gdzie jest…?", pronunciation: "Gdje yest" },
+        { en: "Left / Right", native: "Lewo / Prawo", pronunciation: "LEH-voh / PRAH-voh" },
+        { en: "Straight ahead", native: "Prosto", pronunciation: "PROH-stoh" },
+        { en: "Near / Far", native: "Blisko / Daleko", pronunciation: "BLEE-skoh / dah-LEH-koh" },
+        { en: "Here / There", native: "Tutaj / Tam", pronunciation: "TOO-tay / tahm" },
+        { en: "Airport", native: "Lotnisko", pronunciation: "lot-NEES-koh" },
+        { en: "Train station", native: "Dworzec kolejowy", pronunciation: "DVOH-zhets koh-leh-YOH-vih" },
+        { en: "Bus stop", native: "Przystanek autobusowy", pronunciation: "pshih-STAH-nek ow-toh-boo-SOH-vih" },
+        { en: "Hotel", native: "Hotel", pronunciation: "HOH-tel" },
+        { en: "Hospital", native: "Szpital", pronunciation: "SHPEE-tal" },
+        { en: "Pharmacy", native: "Apteka", pronunciation: "ap-TEH-kah" },
+        { en: "Police", native: "Policja", pronunciation: "poh-LEETS-yah" },
+        { en: "Toilet / Bathroom", native: "Toaleta / Łazienka", pronunciation: "toh-ah-LEH-tah / wah-ZYEN-kah" },
+        { en: "Restaurant", native: "Restauracja", pronunciation: "res-tow-RATS-yah" },
+        { en: "Market / Shop", native: "Rynek / Sklep", pronunciation: "RIH-nek / sklep" },
+      ],
+      food: [
+        { en: "Water", native: "Woda", pronunciation: "VOH-dah" },
+        { en: "Food / Eat", native: "Jedzenie / Jeść", pronunciation: "yeh-DZEN-yeh / yeshch" },
+        { en: "Bread", native: "Chleb", pronunciation: "khleb" },
+        { en: "Meat", native: "Mięso", pronunciation: "MYEN-soh" },
+        { en: "Vegetables", native: "Warzywa", pronunciation: "vah-ZHIH-vah" },
+        { en: "Beer / Wine", native: "Piwo / Wino", pronunciation: "PEE-voh / VEE-noh" },
+        { en: "Coffee / Tea", native: "Kawa / Herbata", pronunciation: "KAH-vah / her-BAH-tah" },
+        { en: "I am vegetarian", native: "Jestem wegetarianinem", pronunciation: "YES-tem veh-geh-tah-ryah-NEE-nem" },
+        { en: "The bill / Check please", native: "Rachunek, proszę", pronunciation: "rah-KHOO-nek PROH-sheh" },
+      ],
+      transport: [
+        { en: "Taxi", native: "Taksówka", pronunciation: "tak-SOOV-kah" },
+        { en: "Bus", native: "Autobus", pronunciation: "OW-toh-boos" },
+        { en: "Train", native: "Pociąg", pronunciation: "POH-chonk" },
+        { en: "Ticket", native: "Bilet", pronunciation: "BEE-let" },
+        { en: "How much?", native: "Ile kosztuje?", pronunciation: "EE-leh kosh-TOO-yeh" },
+        { en: "How far?", native: "Jak daleko?", pronunciation: "yak dah-LEH-koh" },
+      ],
+      emergencies: [
+        { en: "Help!", native: "Pomocy!", pronunciation: "poh-MOH-tsih" },
+        { en: "I am sick", native: "Jestem chory/chora", pronunciation: "YES-tem KHOH-rih" },
+        { en: "Doctor", native: "Lekarz", pronunciation: "LEH-kash" },
+        { en: "Police", native: "Policja", pronunciation: "poh-LEETS-yah" },
+        { en: "Fire", native: "Pożar", pronunciation: "POH-zhar" },
+        { en: "I am lost", native: "Zgubiłem/Zgubiłam się", pronunciation: "Zgoo-BEE-wem SHEH" },
+        { en: "Call an ambulance", native: "Wezwij pogotowie", pronunciation: "VEZ-veey poh-goh-TOH-vyeh" },
+      ],
+      essential: [
+        { en: "How much does this cost?", native: "Ile to kosztuje?", pronunciation: "EE-leh toh kosh-TOO-yeh" },
+        { en: "Too expensive", native: "Za drogie", pronunciation: "zah DROH-gyeh" },
+        { en: "Where is the toilet?", native: "Gdzie jest toaleta?", pronunciation: "Gdje yest toh-ah-LEH-tah" },
+        { en: "I need…", native: "Potrzebuję…", pronunciation: "poh-tsheh-BOO-yeh" },
+        { en: "I want…", native: "Chcę…", pronunciation: "khtseh" },
+        { en: "I don't want…", native: "Nie chcę…", pronunciation: "nyeh khtseh" },
+        { en: "I am allergic to…", native: "Jestem uczulony/a na…", pronunciation: "YES-tem oo-choo-LOH-nih nah" },
+        { en: "My name is…", native: "Mam na imię…", pronunciation: "mam nah EE-myeh" },
+        { en: "I am from…", native: "Jestem z…", pronunciation: "YES-tem z" },
+      ],
+      phrases: [
+        { en: "Sorry, I don't speak Polish", native: "Przepraszam, nie mówię po polsku", pronunciation: "Psheh-PRAH-shahm nyeh MOO-vyeh poh POL-skoo" },
+        { en: "Can you repeat that?", native: "Czy może Pan/Pani powtórzyć?", pronunciation: "chih MOH-zheh pan/PAH-nee pov-TOO-zhich" },
+        { en: "Can you speak more slowly?", native: "Czy może Pan/Pani mówić wolniej?", pronunciation: "chih MOH-zheh pan/PAH-nee MOO-vich VOL-nyey" },
+        { en: "Can you write it down?", native: "Czy może Pan/Pani to napisać?", pronunciation: "chih MOH-zheh pan/PAH-nee toh nah-PEE-sach" },
+        { en: "What does this mean?", native: "Co to znaczy?", pronunciation: "tsoh toh ZNAH-chih" },
+        { en: "Is there someone who speaks English?", native: "Czy jest ktoś kto mówi po angielsku?", pronunciation: "chih yest ktosh ktoh MOO-vee poh an-GYEL-skoo" },
+        { en: "I understand a little", native: "Rozumiem trochę", pronunciation: "roh-ZOO-myem TROH-kheh" },
+        { en: "Can you help me?", native: "Czy może mi Pan/Pani pomóc?", pronunciation: "chih MOH-zheh mee pan/PAH-nee POH-muts" },
+        { en: "Where can I find…?", native: "Gdzie mogę znaleźć…?", pronunciation: "gdje MOH-geh znah-LESHCH" },
+        { en: "I have a reservation", native: "Mam rezerwację", pronunciation: "mam reh-zehr-VAT-syeh" },
+        { en: "Is Wi-Fi available?", native: "Czy jest Wi-Fi?", pronunciation: "chih yest wee-FEE" },
+        { en: "Can I have the menu?", native: "Poproszę menu", pronunciation: "poh-PROH-sheh MEH-noo" },
+      ],
+    }
+  },
+  thai: {
+    name: "Thai",
+    categories: {
+      basic: [
+        { en: "Hello / Hi", native: "สวัสดี", pronunciation: "Sa-wat-dee", engPronunciation: "sa-WAT-dee" },
+        { en: "Goodbye", native: "ลาก่อน", pronunciation: "Laa-gon", engPronunciation: "lah-GAWN" },
+        { en: "Please", native: "กรุณา", pronunciation: "Ga-ru-naa", engPronunciation: "ga-roo-NAH" },
+        { en: "Thank you", native: "ขอบคุณ", pronunciation: "Khob-khun", engPronunciation: "KAWP-koon" },
+        { en: "Sorry / Excuse me", native: "ขอโทษ", pronunciation: "Kho-thot", engPronunciation: "kaw-TOTE" },
+        { en: "Yes", native: "ใช่", pronunciation: "Chai", engPronunciation: "chye" },
+        { en: "No", native: "ไม่", pronunciation: "Mai", engPronunciation: "my" },
+        { en: "I don't understand", native: "ไม่เข้าใจ", pronunciation: "Mai khao jai", engPronunciation: "my KOW-jai" },
+        { en: "Do you speak English?", native: "คุณพูดภาษาอังกฤษได้ไหม", pronunciation: "Khun phut phasa Angkrit dai mai", engPronunciation: "kun poot pah-SAH ang-GRIT die my" },
+        { en: "Help", native: "ช่วยด้วย", pronunciation: "Chuay duay", engPronunciation: "choo-AY doo-AY" },
+      ],
+      numbers: [
+        { en: "1", native: "หนึ่ง", pronunciation: "Neung", engPronunciation: "nung" },
+        { en: "2", native: "สอง", pronunciation: "Song", engPronunciation: "sawng" },
+        { en: "3", native: "สาม", pronunciation: "Saam", engPronunciation: "sahm" },
+        { en: "4", native: "สี่", pronunciation: "See", engPronunciation: "see" },
+        { en: "5", native: "ห้า", pronunciation: "Haa", engPronunciation: "hah" },
+        { en: "6", native: "หก", pronunciation: "Hok", engPronunciation: "hoke" },
+        { en: "7", native: "เจ็ด", pronunciation: "Jet", engPronunciation: "jet" },
+        { en: "8", native: "แปด", pronunciation: "Paet", engPronunciation: "payt" },
+        { en: "9", native: "เก้า", pronunciation: "Gao", engPronunciation: "gao" },
+        { en: "10", native: "สิบ", pronunciation: "Sip", engPronunciation: "sip" },
+        { en: "11", native: "สิบเอ็ด", pronunciation: "Sip-et", engPronunciation: "sip-ET" },
+        { en: "12", native: "สิบสอง", pronunciation: "Sip-song", engPronunciation: "sip-SAWNG" },
+        { en: "13", native: "สิบสาม", pronunciation: "Sip-saam", engPronunciation: "sip-SAHM" },
+        { en: "14", native: "สิบสี่", pronunciation: "Sip-see", engPronunciation: "sip-SEE" },
+        { en: "15", native: "สิบห้า", pronunciation: "Sip-haa", engPronunciation: "sip-HAH" },
+        { en: "16", native: "สิบหก", pronunciation: "Sip-hok", engPronunciation: "sip-HOKE" },
+        { en: "17", native: "สิบเจ็ด", pronunciation: "Sip-jet", engPronunciation: "sip-JET" },
+        { en: "18", native: "สิบแปด", pronunciation: "Sip-paet", engPronunciation: "sip-PAYT" },
+        { en: "19", native: "สิบเก้า", pronunciation: "Sip-gao", engPronunciation: "sip-GAO" },
+        { en: "20", native: "ยี่สิบ", pronunciation: "Yi-sip", engPronunciation: "yee-SIP" },
+        { en: "30", native: "สามสิบ", pronunciation: "Saam-sip", engPronunciation: "sahm-SIP" },
+        { en: "40", native: "สี่สิบ", pronunciation: "See-sip", engPronunciation: "see-SIP" },
+        { en: "50", native: "ห้าสิบ", pronunciation: "Haa-sip", engPronunciation: "hah-SIP" },
+        { en: "60", native: "หกสิบ", pronunciation: "Hok-sip", engPronunciation: "hoke-SIP" },
+        { en: "70", native: "เจ็ดสิบ", pronunciation: "Jet-sip", engPronunciation: "jet-SIP" },
+        { en: "80", native: "แปดสิบ", pronunciation: "Paet-sip", engPronunciation: "payt-SIP" },
+        { en: "90", native: "เก้าสิบ", pronunciation: "Gao-sip", engPronunciation: "gao-SIP" },
+        { en: "100", native: "ร้อย", pronunciation: "Roi", engPronunciation: "roy" },
+        { en: "200", native: "สองร้อย", pronunciation: "Song-roi", engPronunciation: "sawng-ROY" },
+        { en: "300", native: "สามร้อย", pronunciation: "Saam-roi", engPronunciation: "sahm-ROY" },
+        { en: "400", native: "สี่ร้อย", pronunciation: "See-roi", engPronunciation: "see-ROY" },
+        { en: "500", native: "ห้าร้อย", pronunciation: "Haa-roi", engPronunciation: "hah-ROY" },
+        { en: "600", native: "หกร้อย", pronunciation: "Hok-roi", engPronunciation: "hoke-ROY" },
+        { en: "700", native: "เจ็ดร้อย", pronunciation: "Jet-roi", engPronunciation: "jet-ROY" },
+        { en: "800", native: "แปดร้อย", pronunciation: "Paet-roi", engPronunciation: "payt-ROY" },
+        { en: "900", native: "เก้าร้อย", pronunciation: "Gao-roi", engPronunciation: "gao-ROY" },
+        { en: "1000", native: "พัน", pronunciation: "Phan", engPronunciation: "pan" },
+      ],
+      people: [
+        { en: "I / Me", native: "ผม / ฉัน", pronunciation: "Phom / Chan", engPronunciation: "pome / chan" },
+        { en: "You", native: "คุณ", pronunciation: "Khun", engPronunciation: "kun" },
+        { en: "He / She", native: "เขา", pronunciation: "Khao", engPronunciation: "kao" },
+        { en: "We", native: "เรา", pronunciation: "Rao", engPronunciation: "rao" },
+        { en: "Man / Woman", native: "ผู้ชาย / ผู้หญิง", pronunciation: "Phu-chai / Phu-ying", engPronunciation: "poo-CHAI / poo-YING" },
+        { en: "Child", native: "เด็ก", pronunciation: "Dek", engPronunciation: "dek" },
+      ],
+      time: [
+        { en: "Today", native: "วันนี้", pronunciation: "Wan-nee", engPronunciation: "wan-NEE" },
+        { en: "Tomorrow", native: "พรุ่งนี้", pronunciation: "Phroong-nee", engPronunciation: "proong-NEE" },
+        { en: "Yesterday", native: "เมื่อวาน", pronunciation: "Meua-waan", engPronunciation: "moo-a-WAHN" },
+        { en: "Now", native: "ตอนนี้", pronunciation: "Ton-nee", engPronunciation: "tawn-NEE" },
+        { en: "Morning / Afternoon / Evening", native: "เช้า / บ่าย / เย็น", pronunciation: "Chao / Baai / Yen", engPronunciation: "chow / by / yen" },
+        { en: "What time is it?", native: "กี่โมงแล้ว", pronunciation: "Gee mong laeo", engPronunciation: "gee MONG lay-oh" },
+      ],
+      directions: [
+        { en: "Where is…?", native: "…อยู่ที่ไหน", pronunciation: "…yuu thi nai", engPronunciation: "yoo tee NYE" },
+        { en: "Left / Right", native: "ซ้าย / ขวา", pronunciation: "Saai / Khwaa", engPronunciation: "sai / kwah" },
+        { en: "Straight ahead", native: "ตรงไป", pronunciation: "Trong-pai", engPronunciation: "trong-PAI" },
+        { en: "Near / Far", native: "ใกล้ / ไกล", pronunciation: "Glai / Glai", engPronunciation: "glye (near) / glye (far, rising tone)" },
+        { en: "Here / There", native: "ที่นี่ / ที่นั่น", pronunciation: "Thi-nii / Thi-nan", engPronunciation: "tee-NEE / tee-NAN" },
+        { en: "Airport", native: "สนามบิน", pronunciation: "Sa-naam-bin", engPronunciation: "sa-NAHM-bin" },
+        { en: "Train station", native: "สถานีรถไฟ", pronunciation: "Sa-thaa-nee rot-fai", engPronunciation: "sa-TAH-nee rot-FAI" },
+        { en: "Bus stop", native: "ป้ายรถเมล์", pronunciation: "Paai rot-may", engPronunciation: "pie rot-MAY" },
+        { en: "Hotel", native: "โรงแรม", pronunciation: "Rong-raem", engPronunciation: "rong-RAM" },
+        { en: "Hospital", native: "โรงพยาบาล", pronunciation: "Rong-pha-ya-baan", engPronunciation: "rong-pa-ya-BAHN" },
+        { en: "Pharmacy", native: "ร้านขายยา", pronunciation: "Raan-khaai-yaa", engPronunciation: "rahn-KAI-yah" },
+        { en: "Police", native: "ตำรวจ", pronunciation: "Tam-ruat", engPronunciation: "tam-RUAT" },
+        { en: "Toilet / Bathroom", native: "ห้องน้ำ", pronunciation: "Hong-naam", engPronunciation: "hong-NAHM" },
+        { en: "Restaurant", native: "ร้านอาหาร", pronunciation: "Raan-aa-haan", engPronunciation: "rahn-ah-HAHN" },
+        { en: "Market / Shop", native: "ตลาด / ร้านค้า", pronunciation: "Ta-laat / Raan-khaa", engPronunciation: "ta-LAHT / rahn-KAH" },
+      ],
+      food: [
+        { en: "Water", native: "น้ำ", pronunciation: "Naam", engPronunciation: "nahm" },
+        { en: "Food / Eat", native: "อาหาร / กิน", pronunciation: "Aa-haan / Gin", engPronunciation: "ah-HAHN / gin" },
+        { en: "Bread", native: "ขนมปัง", pronunciation: "Kha-nom-pang", engPronunciation: "ka-NOM-pang" },
+        { en: "Meat", native: "เนื้อ", pronunciation: "Neua", engPronunciation: "noo-a" },
+        { en: "Vegetables", native: "ผัก", pronunciation: "Phak", engPronunciation: "pak" },
+        { en: "Beer / Wine", native: "เบียร์ / ไวน์", pronunciation: "Bia / Wai", engPronunciation: "bee-a / why" },
+        { en: "Coffee / Tea", native: "กาแฟ / ชา", pronunciation: "Gaa-fae / Chaa", engPronunciation: "gah-FAY / chah" },
+        { en: "I am vegetarian", native: "ฉันกินมังสวิรัติ", pronunciation: "Chan gin mang-sa-wi-rat", engPronunciation: "chan gin mang-sa-WEE-rat" },
+        { en: "The bill / Check please", native: "เก็บเงินด้วย", pronunciation: "Gep-ngoen-duay", engPronunciation: "gep-NGERN-doo-ay" },
+      ],
+      transport: [
+        { en: "Taxi", native: "แท็กซี่", pronunciation: "Taek-see", engPronunciation: "TAK-see" },
+        { en: "Bus", native: "รถเมล์", pronunciation: "Rot-may", engPronunciation: "rot-MAY" },
+        { en: "Train", native: "รถไฟ", pronunciation: "Rot-fai", engPronunciation: "rot-FAI" },
+        { en: "Ticket", native: "ตั๋ว", pronunciation: "Tua", engPronunciation: "too-a" },
+        { en: "How much?", native: "เท่าไหร่", pronunciation: "Thao-rai", engPronunciation: "tow-RYE" },
+        { en: "How far?", native: "ไกลแค่ไหน", pronunciation: "Glai kae nai", engPronunciation: "glye kay NYE" },
+      ],
+      emergencies: [
+        { en: "Help!", native: "ช่วยด้วย!", pronunciation: "Chuay-duay!", engPronunciation: "choo-AY doo-AY" },
+        { en: "I am sick", native: "ฉันป่วย", pronunciation: "Chan puay", engPronunciation: "chan poo-AY" },
+        { en: "Doctor", native: "หมอ", pronunciation: "Mor", engPronunciation: "mor" },
+        { en: "Police", native: "ตำรวจ", pronunciation: "Tam-ruat", engPronunciation: "tam-RUAT" },
+        { en: "Fire", native: "ไฟไหม้", pronunciation: "Fai-mai", engPronunciation: "fai-MY" },
+        { en: "I am lost", native: "ฉันหลงทาง", pronunciation: "Chan long-thaang", engPronunciation: "chan long-TAHNG" },
+        { en: "Call an ambulance", native: "โทรเรียกรถพยาบาล", pronunciation: "Tho riak rot-pha-ya-baan", engPronunciation: "toh ree-AK rot-pa-ya-BAHN" },
+      ],
+      essential: [
+        { en: "How much does this cost?", native: "นี่ราคาเท่าไหร่", pronunciation: "Nii raa-khaa thao-rai", engPronunciation: "nee rah-KAH tow-RYE" },
+        { en: "Too expensive", native: "แพงเกินไป", pronunciation: "Phaeng goen pai", engPronunciation: "pang gern-PAI" },
+        { en: "Where is the toilet?", native: "ห้องน้ำอยู่ที่ไหน", pronunciation: "Hong-naam yuu thi nai", engPronunciation: "hong-NAHM yoo tee NYE" },
+        { en: "I need…", native: "ฉันต้องการ…", pronunciation: "Chan tong-gaan…", engPronunciation: "chan tong-GAHN" },
+        { en: "I want…", native: "ฉันอยาก…", pronunciation: "Chan yaak…", engPronunciation: "chan yahk" },
+        { en: "I don't want…", native: "ฉันไม่อยาก…", pronunciation: "Chan mai yaak…", engPronunciation: "chan my yahk" },
+        { en: "I am allergic to…", native: "ฉันแพ้…", pronunciation: "Chan phae…", engPronunciation: "chan pay" },
+        { en: "My name is…", native: "ชื่อฉันคือ…", pronunciation: "Chue chan khue…", engPronunciation: "choo-a chan koo-a" },
+        { en: "I am from…", native: "ฉันมาจาก…", pronunciation: "Chan maa jaak…", engPronunciation: "chan mah JAHK" },
+      ],
+      phrases: [
+        { en: "Sorry, I don't speak Thai", native: "ขอโทษ ฉันพูดภาษาไทยไม่ได้", pronunciation: "Kho-thot chan phut phasa Thai mai dai", engPronunciation: "kaw-TOTE chan poot pah-SAH TIE my die" },
+        { en: "Can you repeat that?", native: "ช่วยพูดอีกครั้งได้ไหม", pronunciation: "Chuay phut eek khrang dai mai", engPronunciation: "choo-AY poot eek KRANG die my" },
+        { en: "Can you speak more slowly?", native: "ช่วยพูดช้าๆ ได้ไหม", pronunciation: "Chuay phut chaa-chaa dai mai", engPronunciation: "choo-AY poot chah-CHAH die my" },
+        { en: "Can you write it down?", native: "ช่วยเขียนให้หน่อยได้ไหม", pronunciation: "Chuay khian hai noi dai mai", engPronunciation: "choo-AY kee-an HYE noy die my" },
+        { en: "What does this mean?", native: "นี่แปลว่าอะไร", pronunciation: "Nii plae waa a-rai", engPronunciation: "nee play WAH ah-RYE" },
+        { en: "Is there someone who speaks English?", native: "มีใครพูดภาษาอังกฤษได้บ้างไหม", pronunciation: "Mee khrai phut phasa Angkrit dai bang mai", engPronunciation: "mee kry poot pah-SAH ang-GRIT die bang my" },
+        { en: "I understand a little", native: "ฉันเข้าใจนิดหน่อย", pronunciation: "Chan khao jai nit noi", engPronunciation: "chan KOW-jai nit NOY" },
+        { en: "Can you help me?", native: "ช่วยฉันได้ไหม", pronunciation: "Chuay chan dai mai", engPronunciation: "choo-AY chan die my" },
+        { en: "Where can I find…?", native: "ฉันหา…ได้ที่ไหน", pronunciation: "Chan haa…dai thi nai", engPronunciation: "chan hah…die tee NYE" },
+        { en: "I have a reservation", native: "ฉันมีการจอง", pronunciation: "Chan mee gaan-jong", engPronunciation: "chan mee gahn-JONG" },
+        { en: "Is Wi-Fi available?", native: "มี Wi-Fi ไหม", pronunciation: "Mee wai-fai mai", engPronunciation: "mee why-FAI my" },
+        { en: "Can I have the menu?", native: "ขอเมนูหน่อยได้ไหม", pronunciation: "Kho menu noi dai mai", engPronunciation: "kaw MEN-oo noy die my" },
+      ],
+    }
+  },
+  vietnamese: {
+    name: "Vietnamese",
+    categories: {
+      basic: [
+        { en: "Hello / Hi", native: "Xin chào", pronunciation: "Sin chow", engPronunciation: "sin CHOW" },
+        { en: "Goodbye", native: "Tạm biệt", pronunciation: "Tam biet", engPronunciation: "tam BEE-et" },
+        { en: "Please", native: "Làm ơn", pronunciation: "Lam un", engPronunciation: "lahm UHN" },
+        { en: "Thank you", native: "Cảm ơn", pronunciation: "Gam un", engPronunciation: "gam UHN" },
+        { en: "Sorry / Excuse me", native: "Xin lỗi", pronunciation: "Sin loy", engPronunciation: "sin LOY" },
+        { en: "Yes", native: "Vâng / Có", pronunciation: "Vang / Gaw", engPronunciation: "vang / gaw" },
+        { en: "No", native: "Không", pronunciation: "Khong", engPronunciation: "kawm" },
+        { en: "I don't understand", native: "Tôi không hiểu", pronunciation: "Toy khong hieu", engPronunciation: "toy kawm HYOO" },
+        { en: "Do you speak English?", native: "Bạn nói được tiếng Anh không?", pronunciation: "Ban noi duoc tieng Anh khong", engPronunciation: "ban noy doo-uk TYANG anh kawm" },
+        { en: "Help", native: "Giúp đỡ", pronunciation: "Zyup dur", engPronunciation: "zyoop DUH" },
+      ],
+      numbers: [
+        { en: "1", native: "Một", pronunciation: "Mot", engPronunciation: "mote" },
+        { en: "2", native: "Hai", pronunciation: "Hai", engPronunciation: "hi" },
+        { en: "3", native: "Ba", pronunciation: "Ba", engPronunciation: "bah" },
+        { en: "4", native: "Bốn", pronunciation: "Bon", engPronunciation: "bone" },
+        { en: "5", native: "Năm", pronunciation: "Nam", engPronunciation: "num" },
+        { en: "6", native: "Sáu", pronunciation: "Sau", engPronunciation: "sow" },
+        { en: "7", native: "Bảy", pronunciation: "Bay", engPronunciation: "bay" },
+        { en: "8", native: "Tám", pronunciation: "Tam", engPronunciation: "tahm" },
+        { en: "9", native: "Chín", pronunciation: "Chin", engPronunciation: "chin" },
+        { en: "10", native: "Mười", pronunciation: "Muoi", engPronunciation: "moo-ee" },
+        { en: "11", native: "Mười một", pronunciation: "Muoi mot", engPronunciation: "moo-ee MOTE" },
+        { en: "12", native: "Mười hai", pronunciation: "Muoi hai", engPronunciation: "moo-ee HI" },
+        { en: "13", native: "Mười ba", pronunciation: "Muoi ba", engPronunciation: "moo-ee BAH" },
+        { en: "14", native: "Mười bốn", pronunciation: "Muoi bon", engPronunciation: "moo-ee BONE" },
+        { en: "15", native: "Mười lăm", pronunciation: "Muoi lam", engPronunciation: "moo-ee LUM" },
+        { en: "16", native: "Mười sáu", pronunciation: "Muoi sau", engPronunciation: "moo-ee SOW" },
+        { en: "17", native: "Mười bảy", pronunciation: "Muoi bay", engPronunciation: "moo-ee BAY" },
+        { en: "18", native: "Mười tám", pronunciation: "Muoi tam", engPronunciation: "moo-ee TAHM" },
+        { en: "19", native: "Mười chín", pronunciation: "Muoi chin", engPronunciation: "moo-ee CHIN" },
+        { en: "20", native: "Hai mươi", pronunciation: "Hai muoi", engPronunciation: "hi MOO-ee" },
+        { en: "30", native: "Ba mươi", pronunciation: "Ba muoi", engPronunciation: "bah MOO-ee" },
+        { en: "40", native: "Bốn mươi", pronunciation: "Bon muoi", engPronunciation: "bone MOO-ee" },
+        { en: "50", native: "Năm mươi", pronunciation: "Nam muoi", engPronunciation: "num MOO-ee" },
+        { en: "60", native: "Sáu mươi", pronunciation: "Sau muoi", engPronunciation: "sow MOO-ee" },
+        { en: "70", native: "Bảy mươi", pronunciation: "Bay muoi", engPronunciation: "bay MOO-ee" },
+        { en: "80", native: "Tám mươi", pronunciation: "Tam muoi", engPronunciation: "tahm MOO-ee" },
+        { en: "90", native: "Chín mươi", pronunciation: "Chin muoi", engPronunciation: "chin MOO-ee" },
+        { en: "100", native: "Một trăm", pronunciation: "Mot tram", engPronunciation: "mote TRAM" },
+        { en: "200", native: "Hai trăm", pronunciation: "Hai tram", engPronunciation: "hi TRAM" },
+        { en: "300", native: "Ba trăm", pronunciation: "Ba tram", engPronunciation: "bah TRAM" },
+        { en: "400", native: "Bốn trăm", pronunciation: "Bon tram", engPronunciation: "bone TRAM" },
+        { en: "500", native: "Năm trăm", pronunciation: "Nam tram", engPronunciation: "num TRAM" },
+        { en: "600", native: "Sáu trăm", pronunciation: "Sau tram", engPronunciation: "sow TRAM" },
+        { en: "700", native: "Bảy trăm", pronunciation: "Bay tram", engPronunciation: "bay TRAM" },
+        { en: "800", native: "Tám trăm", pronunciation: "Tam tram", engPronunciation: "tahm TRAM" },
+        { en: "900", native: "Chín trăm", pronunciation: "Chin tram", engPronunciation: "chin TRAM" },
+        { en: "1000", native: "Một nghìn", pronunciation: "Mot nghin", engPronunciation: "mote NGIN" },
+      ],
+      people: [
+        { en: "I / Me", native: "Tôi", pronunciation: "Toy", engPronunciation: "toy" },
+        { en: "You", native: "Bạn", pronunciation: "Ban", engPronunciation: "ban" },
+        { en: "He / She", native: "Anh ấy / Cô ấy", pronunciation: "Anh ay / Co ay", engPronunciation: "ang AY / gaw AY" },
+        { en: "We", native: "Chúng tôi", pronunciation: "Chung toy", engPronunciation: "choong TOY" },
+        { en: "Man / Woman", native: "Đàn ông / Phụ nữ", pronunciation: "Dan ong / Phu nu", engPronunciation: "dan ONG / foo NOO" },
+        { en: "Child", native: "Đứa trẻ", pronunciation: "Dua tre", engPronunciation: "doo-a TRAY" },
+      ],
+      time: [
+        { en: "Today", native: "Hôm nay", pronunciation: "Hom nay", engPronunciation: "home NAY" },
+        { en: "Tomorrow", native: "Ngày mai", pronunciation: "Ngay mai", engPronunciation: "ngay MY" },
+        { en: "Yesterday", native: "Hôm qua", pronunciation: "Hom kwa", engPronunciation: "home KWAH" },
+        { en: "Now", native: "Bây giờ", pronunciation: "Bay zo", engPronunciation: "bay ZUH" },
+        { en: "Morning / Afternoon / Evening", native: "Buổi sáng / Buổi chiều / Buổi tối", pronunciation: "Buoi sang / Buoi chieu / Buoi toi", engPronunciation: "boo-ee SANG / boo-ee CHYOO / boo-ee TOY" },
+        { en: "What time is it?", native: "Mấy giờ rồi?", pronunciation: "May zo roi", engPronunciation: "may ZUH roy" },
+      ],
+      directions: [
+        { en: "Where is…?", native: "…ở đâu?", pronunciation: "…o dau?", engPronunciation: "uh DOW" },
+        { en: "Left / Right", native: "Trái / Phải", pronunciation: "Trai / Phai", engPronunciation: "try / fye" },
+        { en: "Straight ahead", native: "Đi thẳng", pronunciation: "Di thang", engPronunciation: "dee TANG" },
+        { en: "Near / Far", native: "Gần / Xa", pronunciation: "Gan / Sa", engPronunciation: "gun / sah" },
+        { en: "Here / There", native: "Ở đây / Ở đó", pronunciation: "O day / O do", engPronunciation: "uh DAY / uh DOH" },
+        { en: "Airport", native: "Sân bay", pronunciation: "San bay", engPronunciation: "sun BAY" },
+        { en: "Train station", native: "Ga tàu", pronunciation: "Ga tau", engPronunciation: "gah TOW" },
+        { en: "Bus stop", native: "Trạm xe buýt", pronunciation: "Tram se buit", engPronunciation: "tram say BWEET" },
+        { en: "Hotel", native: "Khách sạn", pronunciation: "Khach san", engPronunciation: "kahk SAN" },
+        { en: "Hospital", native: "Bệnh viện", pronunciation: "Benh vien", engPronunciation: "ben VEE-en" },
+        { en: "Pharmacy", native: "Nhà thuốc", pronunciation: "Nha thuoc", engPronunciation: "nyah TWOK" },
+        { en: "Police", native: "Cảnh sát", pronunciation: "Kanh sat", engPronunciation: "kan SAHT" },
+        { en: "Toilet / Bathroom", native: "Nhà vệ sinh", pronunciation: "Nha ve sinh", engPronunciation: "nyah vay SING" },
+        { en: "Restaurant", native: "Nhà hàng", pronunciation: "Nha hang", engPronunciation: "nyah HANG" },
+        { en: "Market / Shop", native: "Chợ / Cửa hàng", pronunciation: "Cho / Cua hang", engPronunciation: "chuh / koo-a HANG" },
+      ],
+      food: [
+        { en: "Water", native: "Nước", pronunciation: "Nuoc", engPronunciation: "noo-uk" },
+        { en: "Food / Eat", native: "Thức ăn / Ăn", pronunciation: "Thuc an / An", engPronunciation: "took AN / an" },
+        { en: "Bread", native: "Bánh mì", pronunciation: "Banh mi", engPronunciation: "ban MEE" },
+        { en: "Meat", native: "Thịt", pronunciation: "Thit", engPronunciation: "tit" },
+        { en: "Vegetables", native: "Rau", pronunciation: "Rau", engPronunciation: "rao" },
+        { en: "Beer / Wine", native: "Bia / Rượu vang", pronunciation: "Bia / Ruou vang", engPronunciation: "bee-a / roo-oo VANG" },
+        { en: "Coffee / Tea", native: "Cà phê / Trà", pronunciation: "Ca phe / Tra", engPronunciation: "gah FAY / trah" },
+        { en: "I am vegetarian", native: "Tôi ăn chay", pronunciation: "Toy an chay", engPronunciation: "toy an CHAY" },
+        { en: "The bill / Check please", native: "Tính tiền", pronunciation: "Tinh tien", engPronunciation: "ting TYEN" },
+      ],
+      transport: [
+        { en: "Taxi", native: "Taxi", pronunciation: "Tak-xi", engPronunciation: "TAK-see" },
+        { en: "Bus", native: "Xe buýt", pronunciation: "Se buit", engPronunciation: "say BWEET" },
+        { en: "Train", native: "Tàu hoả", pronunciation: "Tau hoa", engPronunciation: "tow HWA" },
+        { en: "Ticket", native: "Vé", pronunciation: "Ve", engPronunciation: "vay" },
+        { en: "How much?", native: "Bao nhiêu?", pronunciation: "Bao nhieu", engPronunciation: "bow NYOO" },
+        { en: "How far?", native: "Xa bao nhiêu?", pronunciation: "Sa bao nhieu", engPronunciation: "sah bow NYOO" },
+      ],
+      emergencies: [
+        { en: "Help!", native: "Cứu tôi!", pronunciation: "Guu toy!", engPronunciation: "goo TOY" },
+        { en: "I am sick", native: "Tôi bị ốm", pronunciation: "Toy bi om", engPronunciation: "toy bee OM" },
+        { en: "Doctor", native: "Bác sĩ", pronunciation: "Bak si", engPronunciation: "bak SEE" },
+        { en: "Police", native: "Cảnh sát", pronunciation: "Kanh sat", engPronunciation: "kan SAHT" },
+        { en: "Fire", native: "Cháy", pronunciation: "Chay", engPronunciation: "chay" },
+        { en: "I am lost", native: "Tôi bị lạc", pronunciation: "Toy bi lac", engPronunciation: "toy bee LAK" },
+        { en: "Call an ambulance", native: "Gọi xe cứu thương", pronunciation: "Goi se guu tuong", engPronunciation: "goy say goo TOO-ung" },
+      ],
+      essential: [
+        { en: "How much does this cost?", native: "Cái này bao nhiêu?", pronunciation: "Kai nay bao nhieu", engPronunciation: "kai NAY bow NYOO" },
+        { en: "Too expensive", native: "Đắt quá", pronunciation: "Dat kwa", engPronunciation: "dat KWAH" },
+        { en: "Where is the toilet?", native: "Nhà vệ sinh ở đâu?", pronunciation: "Nha ve sinh o dau", engPronunciation: "nyah vay SING uh DOW" },
+        { en: "I need…", native: "Tôi cần…", pronunciation: "Toy can…", engPronunciation: "toy GUN" },
+        { en: "I want…", native: "Tôi muốn…", pronunciation: "Toy muon…", engPronunciation: "toy MOO-un" },
+        { en: "I don't want…", native: "Tôi không muốn…", pronunciation: "Toy khong muon…", engPronunciation: "toy kawm MOO-un" },
+        { en: "I am allergic to…", native: "Tôi bị dị ứng với…", pronunciation: "Toy bi zi ung voi…", engPronunciation: "toy bee zee UNG voy" },
+        { en: "My name is…", native: "Tên tôi là…", pronunciation: "Ten toy la…", engPronunciation: "ten toy LAH" },
+        { en: "I am from…", native: "Tôi đến từ…", pronunciation: "Toy den tu…", engPronunciation: "toy den TOO" },
+      ],
+      phrases: [
+        { en: "Sorry, I don't speak Vietnamese", native: "Xin lỗi, tôi không nói được tiếng Việt", pronunciation: "Sin loy, toy khong noi duoc tieng Viet", engPronunciation: "sin LOY toy kawm noy doo-uk TYANG vyet" },
+        { en: "Can you repeat that?", native: "Bạn có thể nhắc lại không?", pronunciation: "Ban co the nhac lai khong", engPronunciation: "ban gaw tay nyak LYE kawm" },
+        { en: "Can you speak more slowly?", native: "Bạn có thể nói chậm hơn không?", pronunciation: "Ban co the noi cham hon khong", engPronunciation: "ban gaw tay noy CHUM hun kawm" },
+        { en: "Can you write it down?", native: "Bạn có thể viết ra không?", pronunciation: "Ban co the viet ra khong", engPronunciation: "ban gaw tay VEE-et rah kawm" },
+        { en: "What does this mean?", native: "Cái này có nghĩa là gì?", pronunciation: "Kai nay co nghia la gi", engPronunciation: "kai NAY gaw NYAH lah zee" },
+        { en: "Is there someone who speaks English?", native: "Có ai nói được tiếng Anh không?", pronunciation: "Co ai noi duoc tieng Anh khong", engPronunciation: "gaw eye noy doo-uk TYANG anh kawm" },
+        { en: "I understand a little", native: "Tôi hiểu một chút", pronunciation: "Toy hieu mot chut", engPronunciation: "toy HYOO mote choot" },
+        { en: "Can you help me?", native: "Bạn có thể giúp tôi không?", pronunciation: "Ban co the giup toy khong", engPronunciation: "ban gaw tay ZYOOP toy kawm" },
+        { en: "Where can I find…?", native: "Tôi có thể tìm…ở đâu?", pronunciation: "Toy co the tim…o dau", engPronunciation: "toy gaw tay tim…uh DOW" },
+        { en: "I have a reservation", native: "Tôi có đặt trước", pronunciation: "Toy co dat truoc", engPronunciation: "toy gaw dat TROO-uk" },
+        { en: "Is Wi-Fi available?", native: "Có Wi-Fi không?", pronunciation: "Co wai-fai khong", engPronunciation: "gaw why-FAI kawm" },
+        { en: "Can I have the menu?", native: "Cho tôi xem thực đơn", pronunciation: "Cho toy sem thuc don", engPronunciation: "chaw toy sem took DON" },
+      ],
+    }
+  },
+};
+
+// ---- CATEGORY METADATA ----
+const CAT_META = {
+  basic:       { label: "Basic Communication", theme: "basic" },
+  numbers:     { label: "Numbers",             theme: "numbers" },
+  people:      { label: "People & Pronouns",   theme: "people" },
+  time:        { label: "Time",                theme: "time" },
+  directions:  { label: "Directions & Places", theme: "directions" },
+  food:        { label: "Food & Drink",        theme: "food" },
+  transport:   { label: "Transport",           theme: "transport" },
+  emergencies: { label: "Emergencies",         theme: "emergencies" },
+  essential:   { label: "Essential Phrases",   theme: "essential" },
+  phrases:     { label: "Handy Phrases",       theme: "phrases" },
+};
+
+// ---- STATE ----
+let currentLang = 'spanish';
+let currentCat  = 'all';
+let openCard    = null;
+
+// ---- BUILD TABS ----
+function buildTabs() {
+  const nav = document.getElementById('catNav');
+  nav.innerHTML = '';
+
+  const allTab = document.createElement('button');
+  allTab.className = 'cat-tab' + (currentCat === 'all' ? ' active' : '');
+  allTab.dataset.cat = 'all';
+  allTab.textContent = 'All';
+  allTab.onclick = () => selectCat('all');
+  nav.appendChild(allTab);
+
+  const langData = LANGUAGES[currentLang];
+  Object.entries(CAT_META).forEach(([key, meta]) => {
+    if (!langData.categories[key]) return;
+    const btn = document.createElement('button');
+    btn.className = 'cat-tab' + (currentCat === key ? ' active' : '');
+    btn.dataset.cat = key;
+    btn.textContent = meta.label;
+    btn.onclick = () => selectCat(key);
+    nav.appendChild(btn);
+  });
+}
+
+// ---- BUILD CARDS ----
+function buildCards() {
+  const grid = document.getElementById('cardGrid');
+  grid.innerHTML = '';
+
+  const langData = LANGUAGES[currentLang];
+  let cards = [];
+
+  if (currentCat === 'all') {
+    Object.entries(langData.categories).forEach(([catKey, phrases]) => {
+      phrases.forEach(p => cards.push({ ...p, catKey }));
+    });
+  } else {
+    (langData.categories[currentCat] || []).forEach(p => {
+      cards.push({ ...p, catKey: currentCat });
+    });
+  }
+
+  cards.forEach((card, i) => {
+    const meta  = CAT_META[card.catKey];
+    const el    = document.createElement('div');
+    el.className = `flashcard theme-${meta.theme}`;
+    el.style.animationDelay = `${i * 0.03}s`;
+    el.innerHTML = `
+      <div class="cat-label">${meta.label}</div>
+      <div class="card-native">${card.native}</div>
+      <div class="card-pronunciation">${card.pronunciation || ''}</div>
+      ${card.engPronunciation ? `<div class="card-eng-pronunciation">EN: ${card.engPronunciation}</div>` : ''}
+      <div class="card-english">${card.en}</div>
+    `;
+    el.onclick = () => openDetail(card, meta);
+    grid.appendChild(el);
+  });
+
+  // Update progress
+  const fill  = document.getElementById('progressFill');
+  const label = document.getElementById('progressLabel');
+  const cname = document.getElementById('catName');
+  label.textContent = `${cards.length} card${cards.length !== 1 ? 's' : ''}`;
+  cname.textContent = currentCat === 'all' ? 'All Categories' : CAT_META[currentCat]?.label || '';
+  fill.style.width = '100%';
+}
+
+// ---- DETAIL OVERLAY ----
+function openDetail(card, meta) {
+  const overlay = document.getElementById('detailOverlay');
+  const dc      = document.getElementById('detailCard');
+
+  document.getElementById('detailCat').textContent = meta.label;
+  document.getElementById('detailNative').textContent = card.native;
+  document.getElementById('detailPronunciation').textContent = card.pronunciation || '';
+  const engPronEl = document.getElementById('detailEngPron');
+  engPronEl.textContent = card.engPronunciation ? 'EN: ' + card.engPronunciation : '';
+  document.getElementById('detailEnglish').textContent = card.en;
+
+  // Style detail card to match theme
+  const themes = {
+    basic:       { bg: '#0d1b2e', border: 'rgba(59,125,216,0.5)', color: '#90c4ff', font: "'Syne', sans-serif" },
+    numbers:     { bg: '#120a1f', border: 'rgba(139,59,216,0.5)', color: '#d0a0ff', font: "'Space Mono', monospace" },
+    people:      { bg: '#1e0808', border: 'rgba(216,59,59,0.5)',   color: '#ff9090', font: "'Playfair Display', serif" },
+    time:        { bg: '#061910', border: 'rgba(59,216,139,0.5)', color: '#80ffb8', font: "'Syne', sans-serif" },
+    directions:  { bg: '#1f0e00', border: 'rgba(216,139,59,0.5)', color: '#ffcc80', font: "'Bebas Neue', sans-serif" },
+    food:        { bg: '#001f1f', border: 'rgba(59,216,216,0.5)', color: '#80ffff', font: "'Playfair Display', serif" },
+    transport:   { bg: '#0d0d22', border: 'rgba(107,107,216,0.5)', color: '#b0b0ff', font: "'Space Mono', monospace" },
+    emergencies: { bg: '#1f0010', border: 'rgba(216,59,139,0.5)', color: '#ff80c0', font: "'Syne', sans-serif" },
+    essential:   { bg: '#1a1500', border: 'rgba(216,200,59,0.5)', color: '#ffe880', font: "'Playfair Display', serif" },
+    phrases:     { bg: '#0e0a22', border: 'rgba(123,91,216,0.5)', color: '#c8a8ff', font: "'Syne', sans-serif" },
+  };
+  const t = themes[meta.theme] || themes.basic;
+  dc.style.background   = t.bg;
+  dc.style.border       = `1px solid ${t.border}`;
+  dc.style.color        = '#fff';
+  document.getElementById('detailNative').style.color      = t.color;
+  document.getElementById('detailNative').style.fontFamily = t.font;
+
+  overlay.classList.add('open');
+  openCard = card;
+
+  overlay.onclick = (e) => { if (e.target === overlay) closeDetail(); };
+}
+
+function closeDetail() {
+  document.getElementById('detailOverlay').classList.remove('open');
+  openCard = null;
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeDetail();
+});
+
+// ---- CATEGORY SELECT ----
+function selectCat(cat) {
+  currentCat = cat;
+  buildTabs();
+  buildCards();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ---- LANGUAGE SELECT ----
+document.getElementById('langSelect').addEventListener('change', (e) => {
+  currentLang = e.target.value;
+  currentCat  = 'all';
+  buildTabs();
+  buildCards();
+});
+
+// ---- SCROLL TOP ----
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('scrollTop');
+  btn.classList.toggle('visible', window.scrollY > 300);
+});
+
+// ---- INIT ----
+buildTabs();
+buildCards();
+</script>
+</body>
+</html>
