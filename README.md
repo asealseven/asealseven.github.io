@@ -2,7 +2,7 @@ Flash cards for 12 languages containing essential phrases for most situations.
 Go to https://asealseven.github.io/flashcards.html
 
 Language List:
-Spanish,
+Spanish, 
 French,
 German,
 Italian,
